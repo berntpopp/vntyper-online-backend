@@ -76,9 +76,20 @@ services:
     container_name: vntyper_online_frontend
     environment:
       - API_URL=/api # Set API URL to proxy via Nginx
-    ports:
-      - "3000:80"  # Frontend accessible on port 3000
     depends_on:
+      - backend_api
+    networks:
+      - vntyper_network
+
+  proxy:
+    image: nginx:alpine
+    container_name: vntyper_proxy
+    ports:
+      - "3000:80"  # Expose Nginx on port 3000
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
       - backend_api
     networks:
       - vntyper_network
