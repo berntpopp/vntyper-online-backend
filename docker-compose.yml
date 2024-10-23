@@ -20,6 +20,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - MAX_RESULT_AGE_DAYS=7
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
     volumes:
       - /mnt/c/development/VNtyper/out/download:/opt/vntyper/input
       - /mnt/c/development/VNtyper/out/output:/opt/vntyper/output
@@ -41,6 +44,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - MAX_RESULT_AGE_DAYS=7
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
     volumes:
       - /mnt/c/development/VNtyper/out/download:/opt/vntyper/input
       - /mnt/c/development/VNtyper/out/output:/opt/vntyper/output
@@ -60,6 +66,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - MAX_RESULT_AGE_DAYS=7
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
     volumes:
       - /mnt/c/development/VNtyper/out/download:/opt/vntyper/input
       - /mnt/c/development/VNtyper/out/output:/opt/vntyper/output
@@ -75,9 +84,7 @@ services:
     image: vntyper_frontend:2.0.0-alpha.7
     container_name: vntyper_online_frontend
     environment:
-      - API_URL=/api # Set API URL to proxy via Nginx
-    depends_on:
-      - backend_api
+      - API_URL=/api
     networks:
       - vntyper_network
 
