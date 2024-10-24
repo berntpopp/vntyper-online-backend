@@ -6,3 +6,8 @@ node_modules/
 build/
 dist/
 *.zip
+
+# Ignore .env files
+.env
+.env.local
+.env.production
