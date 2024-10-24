@@ -83,8 +83,6 @@ services:
       dockerfile: Dockerfile
     image: vntyper_frontend:2.0.0-alpha.7
     container_name: vntyper_online_frontend
-    environment:
-      - API_URL=/api
     networks:
       - vntyper_network
 
