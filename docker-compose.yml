@@ -74,7 +74,7 @@ services:
       - vntyper_network
 
   proxy:
-    image: nginx:alpine
+    image: nginx:1.26.2-alpine-slim
     container_name: vntyper_proxy
     ports:
       - "80:80"      # HTTP
