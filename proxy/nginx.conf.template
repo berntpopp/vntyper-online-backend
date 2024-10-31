@@ -2,6 +2,9 @@ server {
     listen 80;
     server_name ${SERVER_NAME};
 
+    # Set maximum allowed size for client requests
+    client_max_body_size ${CLIENT_MAX_BODY_SIZE};
+
     # Serve Frontend Static Files
     location / {
         proxy_pass http://frontend:80;
