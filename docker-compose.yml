@@ -84,7 +84,7 @@ services:
     environment:
       - SERVER_NAME=${SERVER_NAME}
       - CLIENT_MAX_BODY_SIZE=${CLIENT_MAX_BODY_SIZE}
-    entrypoint: ["/entrypoint.sh"]
+    entrypoint: ["/bin/sh", "-c", "chmod +x /entrypoint.sh && /entrypoint.sh"]
     depends_on:
       - frontend
       - backend_api
