@@ -74,17 +74,19 @@ services:
       - vntyper_network
 
   proxy:
-    image: nginx:1.26.2-alpine-slim
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile
+    image: vntyper_proxy:2.0.0-alpha.17
     container_name: vntyper_proxy
     ports:
       - "80:80"      # HTTP
     volumes:
       - ./proxy/nginx.conf.template:/etc/nginx/conf.d/nginx.conf.template:ro
-      - ./proxy/entrypoint.sh:/entrypoint.sh:ro
     environment:
       - SERVER_NAME=${SERVER_NAME}
       - CLIENT_MAX_BODY_SIZE=${CLIENT_MAX_BODY_SIZE}
-    entrypoint: ["/bin/sh", "-c", "chmod +x /entrypoint.sh && /entrypoint.sh"]
+    entrypoint: ["/entrypoint.sh"]
     depends_on:
       - frontend
       - backend_api
