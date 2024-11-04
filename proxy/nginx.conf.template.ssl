@@ -2,9 +2,18 @@
 server {
     listen 80;
     server_name ${SERVER_NAME};
-    return 301 https://$host$request_uri;
+
+    # Serve ACME challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 
+# HTTPS server
 server {
     listen 443 ssl;
     server_name ${SERVER_NAME};
@@ -45,7 +54,7 @@ server {
         deny all;
     }
 
-    # Certbot Challenge
+    # Serve ACME challenge over HTTPS (optional)
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
