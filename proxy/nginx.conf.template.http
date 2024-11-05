@@ -31,4 +31,21 @@ server {
     location ~ /\.env {
         deny all;
     }
+
+    # Security Headers for HTTP (Limited)
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self';" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
+
+    # Hide Nginx version
+    server_tokens off;
+
+    # Serve ACME challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
 }
