@@ -42,8 +42,8 @@ server {
     
     # Updated Content Security Policy without 'unsafe-inline'
     add_header Content-Security-Policy "default-src 'self'; \
-        script-src 'self' https://trusted.cdn.com https://biowasm.com; \
-        style-src 'self' https://trusted.cdn.com; \
+        script-src 'self' https://biowasm.com; \
+        style-src 'self'; \
         img-src 'self' data:; \
         object-src 'none'; \
         frame-ancestors 'self'; \
@@ -86,7 +86,7 @@ server {
         deny all;
     }
 
-    # Serve ACME challenge over HTTPS (optional)
+    # Serve ACME challenge over HTTPS (single occurrence)
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
