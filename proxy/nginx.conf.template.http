@@ -40,7 +40,7 @@ server {
     add_header X-Referrer-Policy "strict-origin-when-cross-origin" always;
     
     # Updated Content Security Policy without 'unsafe-inline'
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://biowasm.com 'unsafe-eval'; style-src 'self'; img-src 'self' data:; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:; connect-src 'self' https://biowasm.com;" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://biowasm.com https://cdnjs.cloudflare.com 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:; connect-src 'self' https://biowasm.com https://cdnjs.cloudflare.com;" always;
 
     add_header Cross-Origin-Resource-Policy "same-origin" always;
 
