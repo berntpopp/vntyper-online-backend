@@ -17,6 +17,7 @@ fi
 # Run Certbot to obtain certificates
 certbot certonly --webroot -w /var/www/certbot \
     -d "$SERVER_NAME" \
+    -d "$SERVER_NAME_SUBDOMAIN" \
     --email "$CERTBOT_EMAIL" \
     --agree-tos \
     --non-interactive \
