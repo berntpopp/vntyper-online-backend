@@ -4,6 +4,7 @@ set -e
 
 echo "Starting Certbot with the following parameters:"
 echo "SERVER_NAME: $SERVER_NAME"
+echo "SERVER_NAME: $SERVER_NAME_SUBDOMAIN"
 echo "CERTBOT_EMAIL: $CERTBOT_EMAIL"
 echo "CERTBOT_STAGING: $CERTBOT_STAGING"
 
