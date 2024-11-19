@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   redis:
     image: redis:6-alpine
@@ -26,6 +28,25 @@ services:
     ports:
       - "8000:8000"
 
+  # Dedicated worker for run_vntyper_job
+  backend_worker_vntyper:
+    build:
+      context: ./backend/docker
+      dockerfile: Dockerfile
+    image: vntyper:2.0.0-alpha.16
+    container_name: vntyper_online_worker_vntyper
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
+    env_file:
+      - .env.local
+    volumes:
+      - ${INPUT_VOLUME}:/opt/vntyper/input
+      - ${OUTPUT_VOLUME}:/opt/vntyper/output
+    depends_on:
+      - redis
+    networks:
+      - vntyper_network
+
+  # Worker for other tasks
   backend_worker:
     build:
       context: ./backend/docker
