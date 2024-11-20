@@ -40,7 +40,7 @@ server {
     add_header X-Referrer-Policy "strict-origin-when-cross-origin" always;
     
     # Updated Content Security Policy without 'unsafe-inline'
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://biowasm.com https://cdnjs.cloudflare.com  https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' https://fastapi.tiangolo.com data:; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:; connect-src 'self' https://biowasm.com;" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://biowasm.com https://cdnjs.cloudflare.com  https://cdn.jsdelivr.net 'sha256-1I8qOd6RIfaPInCv8Ivv4j+J0C6d7I8+th40S5U/TVc=' 'wasm-unsafe-eval'; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' https://fastapi.tiangolo.com data:; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:; connect-src 'self' https://biowasm.com;" always;
 
     add_header Cross-Origin-Resource-Policy "same-origin" always;
 
