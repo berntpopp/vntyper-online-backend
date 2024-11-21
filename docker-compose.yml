@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   redis:
     image: redis:6-alpine
@@ -6,6 +8,11 @@ services:
       - "6379:6379"
     networks:
       - vntyper_network
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-defaultpassword}", "--appendonly", "yes"]
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-defaultpassword}
+    volumes:
+      - redis_data:/data
 
   backend_api:
     build:
@@ -111,3 +118,6 @@ services:
 networks:
   vntyper_network:
     driver: bridge
+
+volumes:
+  redis_data:
