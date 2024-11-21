@@ -3,7 +3,7 @@ services:
     build:
       context: ./proxy
       dockerfile: Dockerfile
-    image: vntyper_proxy:2.0.0-alpha.17
+    image: vntyper_proxy:2.0.0-alpha.16
     container_name: vntyper_proxy
     ports:
       - "80:80"
