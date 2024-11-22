@@ -51,6 +51,18 @@ server {
 
     client_max_body_size ${CLIENT_MAX_BODY_SIZE};
 
+    # Enable gzip compression
+    gzip on;                                 # Enable gzip module
+    gzip_types text/plain text/css           # Compress text-based content
+               application/json application/javascript
+               text/xml application/xml application/xml+rss
+               application/vnd.ms-fontobject application/x-font-ttf
+               font/opentype image/svg+xml image/x-icon;
+    gzip_min_length 1000;                    # Only compress files larger than 1000 bytes
+    gzip_proxied any;                        # Compress responses for all proxied requests
+    gzip_comp_level 5;                       # Compression level (1-9, tradeoff between speed and compression)
+    gzip_vary on;                            # Add Vary: Accept-Encoding header for proxies and CDN compatibility
+
     # Serve Frontend Static Files
     location / {
         proxy_pass http://frontend:80;
