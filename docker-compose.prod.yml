@@ -1,3 +1,4 @@
+# docker-compose.prod.yml
 services:
   proxy:
     build:
@@ -9,8 +10,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - /etc/ssl/certs/vntyper:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
     env_file:
       - .env.production
     networks:
@@ -22,11 +23,15 @@ services:
       dockerfile: Dockerfile
     container_name: vntyper_certbot
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - /etc/ssl/certs/vntyper:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
     env_file:
       - .env.production
     depends_on:
       - proxy
     networks:
       - vntyper_network
+
+networks:
+  vntyper_network:
+    driver: bridge

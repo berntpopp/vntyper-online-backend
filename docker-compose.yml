@@ -1,3 +1,4 @@
+# docker-compose.yml
 services:
   redis:
     image: redis:6-alpine
@@ -100,6 +101,8 @@ services:
     ports:
       - "80:80"  # HTTP only in development
     volumes:
+      - /etc/ssl/certs/vntyper:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
       - ./proxy/nginx.conf.template.http:/etc/nginx/conf.d/nginx.conf.template.http:ro
       - ./proxy/nginx.conf.template.ssl:/etc/nginx/conf.d/nginx.conf.template.ssl:ro
     env_file:
