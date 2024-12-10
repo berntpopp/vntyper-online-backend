@@ -29,6 +29,7 @@ services:
       - vntyper_network
     ports:
       - "8000:8000"
+    restart: unless-stopped
 
   # Dedicated worker for run_vntyper_job
   backend_worker_vntyper:
