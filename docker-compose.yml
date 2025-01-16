@@ -15,7 +15,7 @@ services:
     build:
       context: ./backend/docker
       dockerfile: Dockerfile
-    image: vntyper:2.0.0-alpha.16
+    image: vntyper:2.0.0
     container_name: vntyper_backend_api
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     env_file:
@@ -41,7 +41,7 @@ services:
     build:
       context: ./backend/docker
       dockerfile: Dockerfile
-    image: vntyper:2.0.0-alpha.16
+    image: vntyper:2.0.0
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
     env_file:
@@ -59,7 +59,7 @@ services:
     build:
       context: ./backend/docker
       dockerfile: Dockerfile
-    image: vntyper:2.0.0-alpha.16
+    image: vntyper:2.0.0
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
     env_file:
@@ -76,7 +76,7 @@ services:
     build:
       context: ./backend/docker
       dockerfile: Dockerfile
-    image: vntyper:2.0.0-alpha.16
+    image: vntyper:2.0.0
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     env_file:
@@ -93,7 +93,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: vntyper_frontend:2.0.0-alpha.16
+    image: vntyper_frontend:2.0.0
     container_name: vntyper_online_frontend
     networks:
       - vntyper_network
@@ -102,7 +102,7 @@ services:
     build:
       context: ./proxy
       dockerfile: Dockerfile
-    image: vntyper_proxy:2.0.0-alpha.16
+    image: vntyper_proxy:2.0.0
     container_name: vntyper_proxy
     ports:
       - "80:80"  # HTTP only in development
