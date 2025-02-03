@@ -19,7 +19,7 @@ services:
     container_name: vntyper_backend_api
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     env_file:
-      - .env.local
+      - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
@@ -45,7 +45,7 @@ services:
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
     env_file:
-      - .env.local
+      - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
@@ -63,7 +63,7 @@ services:
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
     env_file:
-      - .env.local
+      - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
@@ -80,7 +80,7 @@ services:
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     env_file:
-      - .env.local
+      - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
@@ -112,7 +112,7 @@ services:
       - ./proxy/nginx.conf.template.http:/etc/nginx/conf.d/nginx.conf.template.http:ro
       - ./proxy/nginx.conf.template.ssl:/etc/nginx/conf.d/nginx.conf.template.ssl:ro
     env_file:
-      - .env.local
+      - ${ENV_FILE:-.env.local}
     entrypoint: ["/entrypoint.sh"]
     depends_on:
       - frontend
