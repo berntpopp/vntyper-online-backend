@@ -32,30 +32,22 @@ services:
     networks:
       - vntyper_network
 
+  # Override worker and beat services in production to load .env.production
   backend_api:
-    build:
-      context: ./backend/docker
-      dockerfile: Dockerfile
-    image: vntyper:latest
-    container_name: vntyper_backend_api
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     env_file:
-      - ${ENV_FILE:-.env.production}
-    volumes:
-      - ${INPUT_VOLUME}:/opt/vntyper/input
-      - ${OUTPUT_VOLUME}:/opt/vntyper/output
-    depends_on:
-      - redis
-    networks:
-      - vntyper_network
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 60s
-      timeout: 5s
-      retries: 3
+      - .env.production
+
+  backend_worker_vntyper:
+    env_file:
+      - .env.production
+
+  backend_worker:
+    env_file:
+      - .env.production
+
+  backend_beat:
+    env_file:
+      - .env.production
 
 networks:
   vntyper_network:
