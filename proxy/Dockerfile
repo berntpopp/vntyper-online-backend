@@ -1,7 +1,7 @@
 FROM nginx:1.27.3-alpine-slim
 
-# Install envsubst, bash, and curl for health checks
-RUN apk add --no-cache gettext bash curl
+# Install envsubst, bash, curl (for health checks), and inotify-tools for certificate monitoring
+RUN apk add --no-cache gettext bash curl inotify-tools
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh

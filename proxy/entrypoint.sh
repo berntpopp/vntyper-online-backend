@@ -24,8 +24,21 @@ generate_nginx_conf() {
     fi
 }
 
+# Start certificate monitor in background to automatically reload Nginx when the certificate changes
+monitor_certs() {
+    echo "Starting certificate monitor..."
+    # Watch for modifications on the certificate file
+    while inotifywait -e close_write "$CERT_PATH"; do
+        echo "Certificate file changed. Reloading Nginx..."
+        nginx -s reload
+    done
+}
+
 # Generate Nginx configuration
 generate_nginx_conf
 
-# Start Nginx
+# Start the certificate monitor in the background
+monitor_certs &
+
+# Start Nginx in the foreground
 nginx -g 'daemon off;'
