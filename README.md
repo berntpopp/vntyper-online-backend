@@ -11,6 +11,7 @@ VNtyper Online is a comprehensive web application designed for MUC1-VNTR typing.
   - [1. Clone the Repository with Submodules](#1-clone-the-repository-with-submodules)
   - [2. Configure Environment Variables](#2-configure-environment-variables)
   - [3. Build and Start Services](#3-build-and-start-services)
+- [Development](#development)
 - [Usage](#usage)
 - [Deployment](#deployment)
 - [License](#license)
@@ -146,6 +147,27 @@ docker-compose --env-file .env.production -f docker-compose.yml -f docker-compos
 ```
 
 You should see all services up and running, including `backend_api`, `frontend`, `proxy`, `certbot`, etc.
+
+## Development
+
+For fast local development with auto-reload:
+
+**Quick Start:**
+```bash
+# Terminal 1: Backend with auto-reload
+docker-compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up
+
+# Terminal 2: Frontend dev server
+cd frontend && python3 -m http.server 3000
+```
+
+**Access:** http://localhost:3000 (frontend) → http://localhost:8000/api (backend)
+
+**Features:**
+- Frontend changes: Reload browser (~100ms)
+- Backend changes: Auto-reload (~2-10s)
+- CORS enabled for localhost:3000
+- No proxy needed
 
 ## Usage
 
