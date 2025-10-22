@@ -19,3 +19,6 @@ dist/
 .claude/
 CLAUDE.md
 .playwright-mcp/
+
+# vscode settings
+.vscode
