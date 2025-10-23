@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
     image: vntyper:latest
     container_name: vntyper_backend_api
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    # No command specified - entrypoint.sh handles empty command case (starts uvicorn)
     env_file:
       - ${ENV_FILE:-.env.local}
     volumes:
