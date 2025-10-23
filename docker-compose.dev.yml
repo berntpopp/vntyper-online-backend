@@ -4,9 +4,10 @@
 
 services:
   backend_api:
-    # Override command to use fastapi dev with auto-reload (2025 best practice)
+    # Override entrypoint and command to use fastapi dev with auto-reload (2025 best practice)
     # Note: fastapi dev has --reload enabled by default, no need to specify it
-    command: ["conda", "run", "-n", "vntyper", "fastapi", "dev", "app/main.py", "--host", "0.0.0.0", "--port", "8000"]
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["source /opt/conda/etc/profile.d/conda.sh && conda run -n vntyper fastapi dev app/main.py --host 0.0.0.0 --port 8000"]
     volumes:
       # Mount application code for live reload
       - ./backend/docker/app:/opt/vntyper/app:rw
