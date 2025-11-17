@@ -1,0 +1,92 @@
+# Dockerignore for VNtyper Online Backend
+# Excludes unnecessary files from Docker build context
+
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Documentation and Planning
+*.md
+!README.md
+plan/
+docs/
+
+# Backup files
+*.backup
+*.backup_*
+*.bak
+
+# Environment files (loaded via --env-file instead)
+.env
+.env.*
+!.env.example
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Node.js (if any frontend dev files)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test outputs
+test-results/
+coverage/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+!docker-compose.dev.yml
+!docker-compose.prod.yml
+
+# Local development
+dev.sh
+local/
+
+# SSL certificates (mounted as volumes, not copied)
+*.pem
+*.key
+*.crt
+*.csr

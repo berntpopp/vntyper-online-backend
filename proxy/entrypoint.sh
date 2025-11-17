@@ -27,10 +27,21 @@ generate_nginx_conf() {
 # Start certificate monitor in background to automatically reload Nginx when the certificate changes
 monitor_certs() {
     echo "Starting certificate monitor..."
-    # Watch for modifications on the certificate file
-    while inotifywait -e close_write "$CERT_PATH"; do
+
+    # Wait for certificate to appear (check every 60 seconds)
+    # This handles first-time deployments where cert doesn't exist yet
+    while [ ! -f "$CERT_PATH" ]; do
+        echo "Waiting for certificate to be created: $CERT_PATH"
+        sleep 60
+    done
+
+    echo "Certificate detected. Starting inotifywait monitoring: $CERT_PATH"
+
+    # Monitor for certificate changes (renewals)
+    while inotifywait -e close_write,moved_to "$CERT_PATH" 2>/dev/null; do
         echo "Certificate file changed. Reloading Nginx..."
-        nginx -s reload
+        # Test config before reload to prevent downtime from invalid config
+        nginx -t 2>/dev/null && nginx -s reload && echo "Nginx reloaded successfully" || echo "ERROR: Nginx reload failed"
     done
 }
 

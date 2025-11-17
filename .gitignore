@@ -15,6 +15,11 @@ dist/
 # log files
 *.log
 
+# Backup files
+*.backup
+*.backup_*
+*.bak
+
 # claude files and folders
 .claude/
 CLAUDE.md
