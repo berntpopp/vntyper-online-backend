@@ -11,22 +11,39 @@
 The following hardening measures were implemented:
 
 ### Completed
-- [x] **proxy/Dockerfile**: Pinned base image with SHA digest, added OCI labels, custom nginx.conf for tmpfs compatibility
-- [x] **certbot/Dockerfile**: Pinned base image (v3.0.1) with SHA digest, added OCI labels and health check
+- [x] **proxy/Dockerfile**:
+  - Switched to `nginxinc/nginx-unprivileged` base image (runs as UID 101)
+  - Pinned base image with SHA digest for supply chain security
+  - Added OCI labels for traceability
+  - Configured for unprivileged ports (8080/8443 mapped to 80/443 in compose)
+- [x] **certbot/Dockerfile**:
+  - Pinned base image (v3.0.1) with SHA digest
+  - Added non-root user (certbot, UID 1000)
+  - Added OCI labels and health check
 - [x] **docker-compose.yml**: Complete security hardening for all services:
   - `security_opt: no-new-privileges:true`
-  - `cap_drop: ALL` with minimal `cap_add` where required
-  - `read_only: true` with tmpfs for redis, frontend, proxy
+  - `cap_drop: ALL` (no NET_BIND_SERVICE needed with unprivileged ports)
+  - `read_only: true` with tmpfs for redis, frontend
   - Resource limits (CPU/memory) for all services
   - Health checks for all services including workers
-- [x] **docker-compose.prod.yml**: Certbot security hardening, resource limits
+  - Port mapping: 80:8080 for proxy
+- [x] **docker-compose.prod.yml**:
+  - Certbot runs as non-root (UID 1000)
+  - Port mapping: 80:8080, 443:8443
+  - Documentation for required host directory permissions
 - [x] **docker-compose.dev.yml**: Added backend_worker_vntyper_long service override
-- [x] **nginx templates**: Added `/health` endpoint to all templates
+- [x] **nginx templates**:
+  - Updated to listen on unprivileged ports (8080/8443)
+  - Added `/health` endpoint to all templates
+- [x] **entrypoint scripts**: Fixed ShellCheck warnings (SC2154) with proper variable declarations
 
 ### Notes
-- Proxy container runs as root due to entrypoint requirements (writes to /etc/nginx/conf.d/, inotifywait monitoring, nginx reload). Security enforced via compose options.
-- Backend containers cannot use read_only due to conda environment requirements.
+- Both proxy and certbot containers now run as non-root users
+- Proxy uses `nginxinc/nginx-unprivileged` (UID 101, nginx user)
+- Certbot uses custom user (UID 1000, certbot user)
+- Backend containers cannot use read_only due to conda environment requirements
 - Redis uses tmpfs for /data instead of persistent storage (suitable for cache/queue use)
+- Host directories for certbot must be owned by UID 1000: `sudo chown -R 1000:1000 /etc/ssl/certs/vntyper /var/www/certbot`
 - Docker Secrets migration deferred (works with existing env var approach)
 
 ## Table of Contents

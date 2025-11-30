@@ -295,7 +295,7 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
-  # Proxy - Nginx reverse proxy with SSL termination
+  # Proxy - Nginx reverse proxy with SSL termination (non-root)
   # ===========================================================================
   proxy:
     build:
@@ -304,13 +304,12 @@ services:
     image: vntyper_proxy:2.0.0
     container_name: vntyper_proxy
     # Security hardening
-    # Note: Cannot use read_only because entrypoint writes to /etc/nginx/conf.d/
+    # Uses nginx-unprivileged base image (runs as UID 101)
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    cap_add:
-      - NET_BIND_SERVICE  # Required for binding to ports 80/443
+    # Note: No NET_BIND_SERVICE needed - container listens on unprivileged ports 8080/8443
     tmpfs:
       - /tmp:size=64M,noexec,nosuid
     # Resource limits
@@ -323,22 +322,24 @@ services:
           cpus: '0.1'
           memory: 64M
     ports:
-      - "80:80"
+      # Map host privileged ports to container unprivileged ports
+      - "80:8080"
     volumes:
       - /etc/ssl/certs/vntyper:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
-      - ./proxy/nginx.conf.template.http:/etc/nginx/conf.d/nginx.conf.template.http:ro
-      - ./proxy/nginx.conf.template.ssl:/etc/nginx/conf.d/nginx.conf.template.ssl:ro
+      - ./proxy/nginx.conf.template.http:/etc/nginx/templates/nginx.conf.template.http:ro
+      - ./proxy/nginx.conf.template.ssl:/etc/nginx/templates/nginx.conf.template.ssl:ro
     env_file:
       - ${ENV_FILE:-.env.local}
     entrypoint: ["/entrypoint.sh"]
+    command: ["nginx", "-g", "daemon off;"]
     depends_on:
       - frontend
       - backend_api
     networks:
       - vntyper_network
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
       interval: 30s
       timeout: 5s
       retries: 3

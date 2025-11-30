@@ -14,37 +14,40 @@
 
 services:
   # ===========================================================================
-  # Proxy - Add HTTPS port and production volumes
+  # Proxy - Add HTTPS port and production volumes (non-root)
   # ===========================================================================
   proxy:
     ports:
-      - "80:80"
-      - "443:443"
+      # Map host privileged ports to container unprivileged ports
+      - "80:8080"
+      - "443:8443"
     volumes:
       # Production: certificates are read-write for certbot updates
       - /etc/ssl/certs/vntyper:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
-      - ./proxy/nginx.conf.template.http:/etc/nginx/conf.d/nginx.conf.template.http:ro
-      - ./proxy/nginx.conf.template.ssl:/etc/nginx/conf.d/nginx.conf.template.ssl:ro
+      - ./proxy/nginx.conf.template.http:/etc/nginx/templates/nginx.conf.template.http:ro
+      - ./proxy/nginx.conf.template.ssl:/etc/nginx/templates/nginx.conf.template.ssl:ro
     env_file:
       - .env.production
 
   # ===========================================================================
-  # Certbot - SSL Certificate Manager (Let's Encrypt)
+  # Certbot - SSL Certificate Manager (Let's Encrypt) - Non-Root
   # ===========================================================================
+  # IMPORTANT: Host directories must be writable by UID 1000:
+  #   sudo chown -R 1000:1000 /etc/ssl/certs/vntyper /var/www/certbot
   certbot:
     build:
       context: ./certbot
       dockerfile: Dockerfile
     image: vntyper_certbot:1.0.0
     container_name: vntyper_certbot
+    # Run as non-root certbot user (UID 1000)
+    user: "1000:1000"
     # Security hardening
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Note: Certbot requires root for certificate operations
-    # Security enforced via compose options above
     # Resource limits - certbot is lightweight
     deploy:
       resources:
@@ -55,6 +58,7 @@ services:
           cpus: '0.05'
           memory: 32M
     volumes:
+      # Host directories must be owned by UID 1000
       - /etc/ssl/certs/vntyper:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
     env_file:

@@ -1,5 +1,5 @@
 server {
-    listen 80;
+    listen 8080;
     server_name ${SERVER_NAME};
 
     client_max_body_size ${CLIENT_MAX_BODY_SIZE};

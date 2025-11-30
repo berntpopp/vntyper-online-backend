@@ -133,10 +133,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Create dummy env files for validation
+        run: |
+          # Create minimal .env.local for docker-compose validation
+          cat > .env.local << 'EOF'
+          # Dummy env file for CI validation
+          ENVIRONMENT=local
+          SERVER_NAME=localhost
+          CLIENT_MAX_BODY_SIZE=100M
+          REDIS_PASSWORD=dummypassword
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          EOF
+
+          # Create minimal .env.production for docker-compose validation
+          cat > .env.production << 'EOF'
+          # Dummy env file for CI validation
+          ENVIRONMENT=production
+          SERVER_NAME=example.com
+          CLIENT_MAX_BODY_SIZE=100M
+          REDIS_PASSWORD=dummypassword
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          CERTBOT_EMAIL=test@example.com
+          CERTBOT_STAGING=1
+          EOF
+
       - name: Validate docker-compose.yml
         run: docker compose -f docker-compose.yml config --quiet
         env:
-          # Provide dummy values for required variables
           INPUT_VOLUME: /tmp/input
           OUTPUT_VOLUME: /tmp/output
           ENV_FILE: .env.local

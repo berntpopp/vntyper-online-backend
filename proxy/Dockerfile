@@ -1,25 +1,28 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# VNtyper Proxy - Hardened Nginx Reverse Proxy
+# VNtyper Proxy - Hardened Nginx Reverse Proxy (Non-Root)
 # =============================================================================
 # Security features:
+# - Uses official nginx-unprivileged image (runs as non-root)
 # - Pinned base image with SHA digest (supply chain security)
 # - Minimal attack surface (alpine-slim)
-# - Optimized layer caching
 # - OCI labels for traceability
 # =============================================================================
 
 # Pin base image with digest for supply chain security
-# nginx:1.27.3-alpine-slim
-FROM nginx:1.27.3-alpine-slim@sha256:5a56ae385906c5b43ccc99379bce883aa93dc0556d7f705ba501d819925e8fa1
+# nginxinc/nginx-unprivileged:1.27.3-alpine-slim
+FROM nginxinc/nginx-unprivileged:1.27.3-alpine-slim@sha256:24ae9a39acde5b55b877c7d2ced48549cfada5ae497a9fe2cd8a9c0cfc15919b
 
 # OCI Labels for image metadata and traceability
 LABEL org.opencontainers.image.title="VNtyper Proxy" \
-      org.opencontainers.image.description="Hardened Nginx reverse proxy for VNtyper Online" \
+      org.opencontainers.image.description="Hardened Nginx reverse proxy for VNtyper Online (non-root)" \
       org.opencontainers.image.vendor="VNtyper Project" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/berntpopp/vntyper-online-backend" \
       org.opencontainers.image.documentation="https://github.com/berntpopp/vntyper-online-backend"
+
+# Switch to root temporarily to install packages and set permissions
+USER root
 
 # Install required packages in a single layer
 # - gettext: for envsubst (config templating)
@@ -33,72 +36,31 @@ RUN apk add --no-cache \
         inotify-tools \
     && rm -rf /var/cache/apk/*
 
-# Create custom nginx.conf that works with read-only filesystem
-# - Use /tmp for pid file (tmpfs mounted at runtime)
-# - Use /dev/stdout and /dev/stderr for logs (no disk writes)
-RUN printf '%s\n' \
-    'user nginx;' \
-    'worker_processes auto;' \
-    'error_log /dev/stderr notice;' \
-    'pid /tmp/nginx.pid;' \
-    '' \
-    'events {' \
-    '    worker_connections 1024;' \
-    '}' \
-    '' \
-    'http {' \
-    '    include /etc/nginx/mime.types;' \
-    '    default_type application/octet-stream;' \
-    '' \
-    '    log_format main '\''$remote_addr - $remote_user [$time_local] "$request" '\''' \
-    '                    '\''$status $body_bytes_sent "$http_referer" '\''' \
-    '                    '\''"$http_user_agent" "$http_x_forwarded_for"'\'';' \
-    '' \
-    '    access_log /dev/stdout main;' \
-    '' \
-    '    sendfile on;' \
-    '    keepalive_timeout 65;' \
-    '' \
-    '    # Temp paths for read-only filesystem (tmpfs mounted at runtime)' \
-    '    client_body_temp_path /tmp/nginx/client_body;' \
-    '    proxy_temp_path /tmp/nginx/proxy;' \
-    '    fastcgi_temp_path /tmp/nginx/fastcgi;' \
-    '    uwsgi_temp_path /tmp/nginx/uwsgi;' \
-    '    scgi_temp_path /tmp/nginx/scgi;' \
-    '' \
-    '    include /etc/nginx/conf.d/*.conf;' \
-    '}' \
-    > /etc/nginx/nginx.conf
-
 # Copy Nginx configuration templates
-COPY nginx.conf.template.http /etc/nginx/conf.d/nginx.conf.template.http
-COPY nginx.conf.template.ssl /etc/nginx/conf.d/nginx.conf.template.ssl
-COPY nginx.conf.template.acme /etc/nginx/conf.d/nginx.conf.template.acme
+# These are read-only templates used by entrypoint
+COPY --chown=nginx:nginx nginx.conf.template.http /etc/nginx/templates/nginx.conf.template.http
+COPY --chown=nginx:nginx nginx.conf.template.ssl /etc/nginx/templates/nginx.conf.template.ssl
+COPY --chown=nginx:nginx nginx.conf.template.acme /etc/nginx/templates/nginx.conf.template.acme
+
+# Create directories with correct ownership for non-root operation
+# conf.d is where entrypoint writes the generated config
+RUN mkdir -p /etc/nginx/conf.d \
+    && chown -R nginx:nginx /etc/nginx/conf.d \
+    && chmod 755 /etc/nginx/conf.d
 
 # Copy entrypoint script with explicit permissions
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
-# Create required directories for nginx operation
-# These will be overlaid with tmpfs at runtime for read-only filesystem
-RUN mkdir -p /tmp/nginx/client_body \
-             /tmp/nginx/proxy \
-             /tmp/nginx/fastcgi \
-             /tmp/nginx/uwsgi \
-             /tmp/nginx/scgi \
-    && chown -R nginx:nginx /tmp/nginx
+# Switch back to non-root nginx user (UID 101 in nginx-unprivileged)
+USER nginx
 
-# Note: This container runs as root because:
-# 1. entrypoint.sh needs to write to /etc/nginx/conf.d/default.conf
-# 2. inotifywait needs to monitor certificate files
-# 3. nginx -s reload needs to signal the master process
-# Security is enforced via docker-compose security options instead
-
-# Expose HTTP and HTTPS ports
-EXPOSE 80 443
+# Expose HTTP and HTTPS ports (unprivileged ports >= 1024 work without root)
+# These are mapped to 80/443 in docker-compose
+EXPOSE 8080 8443
 
 # Health check - verify nginx is responding
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -sf http://localhost/health || curl -sf http://localhost/ || exit 1
+    CMD curl -sf http://localhost:8080/health || exit 1
 
 # Set entrypoint and default command
 ENTRYPOINT ["/entrypoint.sh"]
