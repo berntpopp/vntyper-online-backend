@@ -53,15 +53,16 @@ services:
       - redis
     networks:
       - vntyper_network
+    restart: unless-stopped
 
-  # Worker for other tasks
-  backend_worker:
+  # Dedicated worker for long-running adVNTR jobs
+  backend_worker_vntyper_long:
     build:
       context: ./backend/docker
       dockerfile: Dockerfile
     image: vntyper:latest
-    container_name: vntyper_online_worker
-    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    container_name: vntyper_online_worker_vntyper_long
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_long_queue"]
     env_file:
       - ${ENV_FILE:-.env.local}
     volumes:
@@ -71,6 +72,26 @@ services:
       - redis
     networks:
       - vntyper_network
+    restart: unless-stopped
+
+  # Worker for other tasks (email, cleanup, cohort analysis)
+  backend_worker:
+    build:
+      context: ./backend/docker
+      dockerfile: Dockerfile
+    image: vntyper:latest
+    container_name: vntyper_online_worker
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "-Q", "celery"]
+    env_file:
+      - ${ENV_FILE:-.env.local}
+    volumes:
+      - ${INPUT_VOLUME}:/opt/vntyper/input
+      - ${OUTPUT_VOLUME}:/opt/vntyper/output
+    depends_on:
+      - redis
+    networks:
+      - vntyper_network
+    restart: unless-stopped
 
   backend_beat:
     build:
@@ -88,6 +109,7 @@ services:
       - redis
     networks:
       - vntyper_network
+    restart: unless-stopped
 
   frontend:
     build:
