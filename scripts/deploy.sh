@@ -58,7 +58,7 @@ $COMPOSE up -d
 
 # Verify
 info "Waiting for health..."
-for i in {1..30}; do
+for _ in {1..30}; do
     curl -sf http://localhost:8000/api/health/ &>/dev/null && break
     sleep 2
 done
