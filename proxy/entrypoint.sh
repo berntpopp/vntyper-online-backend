@@ -44,26 +44,6 @@ generate_nginx_conf() {
     echo "Configuration generated: ${CONF_DIR}/default.conf"
 }
 
-# Warm up OCSP stapling cache by making a test connection
-# This ensures OCSP response is cached before first client request
-warmup_ocsp() {
-    echo "Warming up OCSP stapling cache..."
-    sleep 5  # Wait for nginx to fully start
-
-    # Make a test connection to prime the OCSP cache
-    # Using timeout to prevent hanging if something goes wrong
-    if command -v openssl >/dev/null 2>&1; then
-        timeout 10 openssl s_client -connect localhost:8443 -status </dev/null >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            echo "OCSP cache warmed up successfully"
-        else
-            echo "OCSP warm-up connection completed (response may still be fetching)"
-        fi
-    else
-        echo "OpenSSL not available for OCSP warm-up, skipping..."
-    fi
-}
-
 # Start certificate monitor in background to automatically reload Nginx when the certificate changes
 monitor_certs() {
     echo "Starting certificate monitor..."
@@ -83,8 +63,6 @@ monitor_certs() {
         generate_nginx_conf
         # Test config before reload to prevent downtime from invalid config
         nginx -t 2>/dev/null && nginx -s reload && echo "Nginx reloaded successfully" || echo "ERROR: Nginx reload failed"
-        # Re-warm OCSP cache after certificate change
-        warmup_ocsp &
     done
 }
 
@@ -94,8 +72,6 @@ generate_nginx_conf
 # Start the certificate monitor in the background (only in production)
 if [ "$ENVIRONMENT" = "production" ]; then
     monitor_certs &
-    # Warm up OCSP cache after nginx starts (runs in background)
-    warmup_ocsp &
 fi
 
 # Execute the CMD (nginx)
