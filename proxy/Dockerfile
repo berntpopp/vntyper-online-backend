@@ -24,12 +24,14 @@ LABEL org.opencontainers.image.title="VNtyper Proxy" \
 # Switch to root temporarily to install packages and set permissions
 USER root
 
-# Install required packages in a single layer
+# Install required packages and upgrade base packages for security fixes
 # - gettext: for envsubst (config templating)
 # - bash: for entrypoint script
 # - curl: for health checks
 # - inotify-tools: for certificate change monitoring
-RUN apk add --no-cache \
+# - apk upgrade: fixes CVE-2024-58251, CVE-2025-46394 in busybox
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
         gettext \
         bash \
         curl \
