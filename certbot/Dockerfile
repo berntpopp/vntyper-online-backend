@@ -21,6 +21,9 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
       org.opencontainers.image.source="https://github.com/berntpopp/vntyper-online-backend" \
       org.opencontainers.image.documentation="https://github.com/berntpopp/vntyper-online-backend"
 
+# Upgrade base packages for security fixes (CVE-2024-58251, CVE-2025-46394)
+RUN apk upgrade --no-cache
+
 # Create non-root user for certbot operations
 # UID 1000 chosen for compatibility with typical host user mappings
 ARG CERTBOT_UID=1000
