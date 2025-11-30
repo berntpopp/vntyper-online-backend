@@ -29,6 +29,7 @@ USER root
 # - bash: for entrypoint script
 # - curl: for health checks
 # - inotify-tools: for certificate change monitoring
+# - openssl: for OCSP stapling cache warm-up
 # - apk upgrade: fixes CVE-2024-58251, CVE-2025-46394 in busybox
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
@@ -36,6 +37,7 @@ RUN apk upgrade --no-cache \
         bash \
         curl \
         inotify-tools \
+        openssl \
     && rm -rf /var/cache/apk/*
 
 # Copy Nginx configuration templates
