@@ -3,12 +3,16 @@
 ## Quick Start
 
 ```bash
-# First time or after upgrade
+cd /var/www/vntyper/vntyper-online-backend
+
+# First time or after upgrade to non-root containers
 sudo ./scripts/deploy.sh --fix-perms --no-cache
 
-# Regular updates
+# Regular updates (pulls code, rebuilds, restarts)
 sudo ./scripts/deploy.sh
 ```
+
+The script handles: `git pull` → `submodule update` → `docker-compose down` → `build` → `up`
 
 ## Prerequisites
 
