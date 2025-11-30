@@ -1,0 +1,150 @@
+# .pre-commit-config.yaml
+# Pre-commit hooks configuration for local development
+# https://pre-commit.com/
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Manual run:
+#   pre-commit run --all-files
+#
+# Update hooks:
+#   pre-commit autoupdate
+
+# Minimum pre-commit version required
+minimum_pre_commit_version: '3.0.0'
+
+# Default stages (when hooks run)
+default_stages: [pre-commit]
+
+# Global exclude patterns - skip submodules
+exclude: |
+  (?x)^(
+    backend/.*|
+    frontend/.*|
+    node_modules/.*|
+    \.git/.*
+  )$
+
+repos:
+  # ===========================================================================
+  # General File Checks
+  # ===========================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+      # Ensure files end with a newline
+      - id: end-of-file-fixer
+
+      # Check YAML syntax
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom tags like !reference
+
+      # Prevent large files from being committed
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+
+      # Detect private keys
+      - id: detect-private-key
+
+      # Fix mixed line endings (enforce LF)
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+      # Check JSON syntax
+      - id: check-json
+
+      # Check for case conflicts in filenames
+      - id: check-case-conflict
+
+      # Check executables have shebangs
+      - id: check-executables-have-shebangs
+
+      # Check shell scripts for correct shebang
+      - id: check-shebang-scripts-are-executable
+
+  # ===========================================================================
+  # Dockerfile Linting with Hadolint
+  # ===========================================================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: Lint Dockerfiles
+        entry: hadolint
+        language: docker_image
+        types: [dockerfile]
+        args: ['--config', '.hadolint.yaml']
+
+  # ===========================================================================
+  # Shell Script Linting with ShellCheck
+  # ===========================================================================
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        name: Lint Shell Scripts
+        args: ['--severity=warning', '--rcfile=.shellcheckrc']
+
+  # ===========================================================================
+  # YAML Linting with yamllint
+  # ===========================================================================
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: Lint YAML Files
+        args: ['-c', '.yamllint.yml']
+
+  # ===========================================================================
+  # GitHub Actions Linting with actionlint
+  # ===========================================================================
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.4
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions
+        args: []
+
+  # ===========================================================================
+  # Docker Compose Validation
+  # ===========================================================================
+  - repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v3.0.1
+    hooks:
+      - id: docker-compose-check
+        name: Validate Docker Compose
+        files: docker-compose.*\.ya?ml$
+
+  # ===========================================================================
+  # Security: Detect Secrets with detect-secrets
+  # ===========================================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            \.secrets\.baseline$|
+            backend/.*|
+            frontend/.*
+          )$
+
+# CI configuration - these settings apply when running in CI
+ci:
+  autofix_prs: false
+  autoupdate_schedule: monthly
+  skip:
+    # Skip Docker-based hooks in CI (use GitHub Actions instead)
+    - hadolint-docker
+    - docker-compose-check

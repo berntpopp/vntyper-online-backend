@@ -1,0 +1,48 @@
+# .hadolint.yaml
+# Hadolint configuration for Dockerfile linting
+# https://github.com/hadolint/hadolint
+#
+# Run locally: hadolint proxy/Dockerfile certbot/Dockerfile
+# Or with Docker: docker run --rm -i hadolint/hadolint < Dockerfile
+
+# Failure threshold: error, warning, info, style, ignore
+failure-threshold: warning
+
+# Output format: tty, json, checkstyle, codeclimate, gitlab_codeclimate, codacy, sarif
+format: tty
+
+# Trusted registries (images from these won't trigger DL3026)
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+  - quay.io
+
+# Rules to ignore globally
+# See: https://github.com/hadolint/hadolint#rules
+ignored:
+  # DL3008: Pin versions in apt-get install
+  # Rationale: Security updates should flow automatically; pinning prevents this
+  - DL3008
+
+  # DL3018: Pin versions in apk add
+  # Rationale: Same as DL3008 for Alpine-based images
+  - DL3018
+
+# Override rule severity
+override:
+  # Downgrade to warning (won't fail CI)
+  warning:
+    # DL3015: Avoid additional packages with apt-get install
+    - DL3015
+
+  # Downgrade to info (informational only)
+  info:
+    # DL3059: Multiple consecutive RUN instructions
+    # Rationale: Sometimes intentional for layer caching
+    - DL3059
+
+# Label schema requirements (optional)
+# Uncomment to enforce OCI labels
+# label-schema:
+#   author: text
+#   org.opencontainers.image.source: url

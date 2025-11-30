@@ -1,0 +1,29 @@
+# .shellcheckrc
+# ShellCheck configuration for shell script linting
+# https://github.com/koalaman/shellcheck
+#
+# Run locally: shellcheck proxy/entrypoint.sh certbot/entrypoint.sh
+
+# Default shell dialect: sh, bash, dash, ksh
+# Note: Auto-detected from shebang, but set default for scripts without one
+shell=bash
+
+# Severity level: error, warning, info, style
+severity=warning
+
+# Enable optional checks
+# See: https://github.com/koalaman/shellcheck/wiki/optional
+enable=add-default-case
+enable=avoid-nullary-conditions
+enable=check-unassigned-uppercase
+enable=deprecate-which
+enable=quote-safe-variables
+enable=require-variable-braces
+
+# Disable specific checks
+# SC1091: Not following sourced files (external files we can't analyze)
+disable=SC1091
+
+# SC2312: Consider invoking this command separately (subshell in assignment)
+# Rationale: Often intentional for capturing exit codes
+disable=SC2312

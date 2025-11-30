@@ -1,0 +1,164 @@
+# .github/workflows/lint.yml
+# Linting workflow for Dockerfiles, shell scripts, YAML, and GitHub Actions
+#
+# Runs on: Push to main, PRs targeting main
+# Scope: Main repository files only (submodules excluded)
+
+name: Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.yml'
+      - '*.yaml'
+      - '*.sh'
+      - 'proxy/**'
+      - 'certbot/**'
+      - 'docker-compose*.yml'
+      - '.github/**'
+      - '.hadolint.yaml'
+      - '.shellcheckrc'
+      - '.yamllint.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '*.yml'
+      - '*.yaml'
+      - '*.sh'
+      - 'proxy/**'
+      - 'certbot/**'
+      - 'docker-compose*.yml'
+      - '.github/**'
+      - '.hadolint.yaml'
+      - '.shellcheckrc'
+      - '.yamllint.yml'
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Restrict permissions to minimum required (security best practice)
+permissions:
+  contents: read
+
+jobs:
+  # ===========================================================================
+  # Dockerfile Linting with Hadolint
+  # ===========================================================================
+  hadolint:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Lint proxy/Dockerfile
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
+        with:
+          dockerfile: proxy/Dockerfile
+          config: .hadolint.yaml
+          failure-threshold: warning
+
+      - name: Lint certbot/Dockerfile
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
+        with:
+          dockerfile: certbot/Dockerfile
+          config: .hadolint.yaml
+          failure-threshold: warning
+
+  # ===========================================================================
+  # Shell Script Linting with ShellCheck
+  # ===========================================================================
+  shellcheck:
+    name: Lint Shell Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
+        with:
+          severity: warning
+          scandir: '.'
+          # Exclude submodules
+          ignore_paths: >-
+            backend
+            frontend
+            node_modules
+        env:
+          SHELLCHECK_OPTS: --rcfile=.shellcheckrc
+
+  # ===========================================================================
+  # YAML Linting with yamllint
+  # ===========================================================================
+  yamllint:
+    name: Lint YAML Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@ae1abb2821b567e96742aa776f7b62c9b6a26bc8 # v3.1.1
+        with:
+          file_or_dir: '.'
+          config_file: '.yamllint.yml'
+          strict: false
+
+  # ===========================================================================
+  # GitHub Actions Workflow Linting with actionlint
+  # ===========================================================================
+  actionlint:
+    name: Lint GitHub Actions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run actionlint
+        uses: raven-actions/actionlint@3a24062651993d40fed1019b58ac6fbdfbf276cc # v2.0.0
+        with:
+          fail-on-error: true
+
+  # ===========================================================================
+  # Docker Compose Validation
+  # ===========================================================================
+  docker-compose:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate docker-compose.yml
+        run: docker compose -f docker-compose.yml config --quiet
+        env:
+          # Provide dummy values for required variables
+          INPUT_VOLUME: /tmp/input
+          OUTPUT_VOLUME: /tmp/output
+          ENV_FILE: .env.local
+
+      - name: Validate docker-compose.dev.yml overlay
+        run: |
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.dev.yml \
+            config --quiet
+        env:
+          INPUT_VOLUME: /tmp/input
+          OUTPUT_VOLUME: /tmp/output
+          ENV_FILE: .env.local
+
+      - name: Validate docker-compose.prod.yml overlay
+        run: |
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.prod.yml \
+            config --quiet
+        env:
+          INPUT_VOLUME: /tmp/input
+          OUTPUT_VOLUME: /tmp/output
+          ENV_FILE: .env.production
