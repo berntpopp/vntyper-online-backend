@@ -1,43 +1,83 @@
 # docker-compose.prod.yml
+# =============================================================================
+# VNtyper Online - Production Overrides
+# =============================================================================
+# This file extends docker-compose.yml with production-specific configuration:
+# - Certbot service for SSL certificate management
+# - HTTPS port binding (443)
+# - Production environment file
+# - Security hardening for certbot
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# =============================================================================
+
 services:
+  # ===========================================================================
+  # Proxy - Add HTTPS port and production volumes
+  # ===========================================================================
   proxy:
-    build:
-      context: ./proxy
-      dockerfile: Dockerfile
-    image: vntyper_proxy:2.0.0
-    container_name: vntyper_proxy
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      # Production: certificates are read-write for certbot updates
       - /etc/ssl/certs/vntyper:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
+      - ./proxy/nginx.conf.template.http:/etc/nginx/conf.d/nginx.conf.template.http:ro
+      - ./proxy/nginx.conf.template.ssl:/etc/nginx/conf.d/nginx.conf.template.ssl:ro
     env_file:
       - .env.production
-    networks:
-      - vntyper_network
 
+  # ===========================================================================
+  # Certbot - SSL Certificate Manager (Let's Encrypt)
+  # ===========================================================================
   certbot:
     build:
       context: ./certbot
       dockerfile: Dockerfile
+    image: vntyper_certbot:1.0.0
     container_name: vntyper_certbot
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Note: Certbot requires root for certificate operations
+    # Security enforced via compose options above
+    # Resource limits - certbot is lightweight
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
     volumes:
       - /etc/ssl/certs/vntyper:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
     env_file:
       - .env.production
     depends_on:
-      - proxy
+      proxy:
+        condition: service_healthy
     networks:
       - vntyper_network
+    restart: unless-stopped
 
-  # Override worker and beat services in production to load .env.production
+  # ===========================================================================
+  # Backend Services - Production Environment File Overrides
+  # ===========================================================================
   backend_api:
     env_file:
       - .env.production
 
   backend_worker_vntyper:
+    env_file:
+      - .env.production
+
+  backend_worker_vntyper_long:
     env_file:
       - .env.production
 

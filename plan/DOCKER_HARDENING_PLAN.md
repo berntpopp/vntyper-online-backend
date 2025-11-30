@@ -2,7 +2,32 @@
 
 **Date:** 2025-11-30
 **Scope:** Main repository Docker configurations (proxy, certbot, docker-compose)
-**Status:** Planning
+**Status:** Implemented
+
+---
+
+## Implementation Summary
+
+The following hardening measures were implemented:
+
+### Completed
+- [x] **proxy/Dockerfile**: Pinned base image with SHA digest, added OCI labels, custom nginx.conf for tmpfs compatibility
+- [x] **certbot/Dockerfile**: Pinned base image (v3.0.1) with SHA digest, added OCI labels and health check
+- [x] **docker-compose.yml**: Complete security hardening for all services:
+  - `security_opt: no-new-privileges:true`
+  - `cap_drop: ALL` with minimal `cap_add` where required
+  - `read_only: true` with tmpfs for redis, frontend, proxy
+  - Resource limits (CPU/memory) for all services
+  - Health checks for all services including workers
+- [x] **docker-compose.prod.yml**: Certbot security hardening, resource limits
+- [x] **docker-compose.dev.yml**: Added backend_worker_vntyper_long service override
+- [x] **nginx templates**: Added `/health` endpoint to all templates
+
+### Notes
+- Proxy container runs as root due to entrypoint requirements (writes to /etc/nginx/conf.d/, inotifywait monitoring, nginx reload). Security enforced via compose options.
+- Backend containers cannot use read_only due to conda environment requirements.
+- Redis uses tmpfs for /data instead of persistent storage (suitable for cache/queue use)
+- Docker Secrets migration deferred (works with existing env var approach)
 
 ## Table of Contents
 
