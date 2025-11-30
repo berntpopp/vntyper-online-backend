@@ -36,11 +36,26 @@ done
 
 cd "$DEPLOY_DIR"
 
-# Fix permissions for non-root containers (certbot=1000)
-if [[ "$FIX_PERMS" == true ]]; then
+# Fix permissions for non-root containers
+fix_permissions() {
     info "Fixing permissions..."
+    # Create dirs for certbot (UID 1000)
     mkdir -p /etc/ssl/certs/vntyper /var/www/certbot
     chown -R 1000:1000 /etc/ssl/certs/vntyper /var/www/certbot
+
+    # Fix certificate permissions for nginx (UID 101)
+    # Directories need 755 so nginx can traverse them
+    if [[ -d /etc/ssl/certs/vntyper/live ]]; then
+        chmod 755 /etc/ssl/certs/vntyper/live /etc/ssl/certs/vntyper/archive 2>/dev/null || true
+        # Certificate files need 644 so nginx can read them
+        find /etc/ssl/certs/vntyper/live -name "*.pem" -exec chmod 644 {} \; 2>/dev/null || true
+        find /etc/ssl/certs/vntyper/archive -name "*.pem" -exec chmod 644 {} \; 2>/dev/null || true
+        info "Certificate permissions fixed for nginx"
+    fi
+}
+
+if [[ "$FIX_PERMS" == true ]]; then
+    fix_permissions
 fi
 
 # Stop only
@@ -65,6 +80,9 @@ $COMPOSE build $NO_CACHE
 
 info "Starting..."
 $COMPOSE up -d
+
+# Always fix cert permissions after start (nginx needs to read them)
+fix_permissions
 
 # Verify
 info "Waiting for health..."
