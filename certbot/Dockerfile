@@ -24,6 +24,7 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 # Upgrade base packages and pip for security fixes
 # - CVE-2024-58251, CVE-2025-46394: busybox vulnerabilities
 # - CVE-2025-8869: pip symbolic link extraction vulnerability
+# hadolint ignore=DL3013
 RUN apk upgrade --no-cache \
     && pip install --no-cache-dir --upgrade pip \
     && pip uninstall -y uv 2>/dev/null || true
