@@ -42,6 +42,7 @@ sudo ./scripts/deploy.sh [OPTIONS]
 
 --fix-perms   Fix host directory permissions (run once)
 --no-cache    Force clean rebuild
+--stop        Stop all services
 ```
 
 ## Manual Commands

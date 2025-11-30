@@ -1,6 +1,6 @@
 #!/bin/bash
 # VNtyper Online - Production Deployment
-# Usage: sudo ./scripts/deploy.sh [--no-cache] [--fix-perms]
+# Usage: sudo ./scripts/deploy.sh [--no-cache] [--fix-perms] [--stop]
 set -euo pipefail
 
 # Config
@@ -23,11 +23,13 @@ command -v docker-compose &>/dev/null || error "docker-compose not found"
 # Parse args
 NO_CACHE=""
 FIX_PERMS=false
+STOP_ONLY=false
 for arg in "$@"; do
     case $arg in
         --no-cache) NO_CACHE="--no-cache" ;;
         --fix-perms) FIX_PERMS=true ;;
-        --help|-h) echo "Usage: sudo $0 [--no-cache] [--fix-perms]"; exit 0 ;;
+        --stop) STOP_ONLY=true ;;
+        --help|-h) echo "Usage: sudo $0 [--no-cache] [--fix-perms] [--stop]"; exit 0 ;;
         *) error "Unknown option: $arg" ;;
     esac
 done
@@ -39,6 +41,14 @@ if [[ "$FIX_PERMS" == true ]]; then
     info "Fixing permissions..."
     mkdir -p /etc/ssl/certs/vntyper /var/www/certbot
     chown -R 1000:1000 /etc/ssl/certs/vntyper /var/www/certbot
+fi
+
+# Stop only
+if [[ "$STOP_ONLY" == true ]]; then
+    info "Stopping services..."
+    $COMPOSE down --remove-orphans
+    info "Stopped."
+    exit 0
 fi
 
 # Pull
