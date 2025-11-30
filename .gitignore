@@ -27,6 +27,8 @@ CLAUDE.md
 
 # vscode settings
 .vscode
-# SSH keys
+
+# Deployment
+.deploy/
 server_key
 *.ppk
