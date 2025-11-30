@@ -11,7 +11,7 @@
 
 # Pin base image with version and digest for supply chain security
 # certbot/certbot:v3.0.1
-FROM certbot/certbot:v3.0.1@sha256:4d8875e85a2af373262914e15c0a149e1985c5bbd05ac433fe4763f465020fcf
+FROM certbot/certbot:v5.1.0@sha256:bb72eb98a32ecc5dcef8eeeb8fb6a2a8c50d4d93e2a2c3542f8cb679840c990c
 
 # OCI Labels for image metadata and traceability
 LABEL org.opencontainers.image.title="VNtyper Certbot" \
