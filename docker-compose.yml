@@ -288,6 +288,7 @@ services:
     tmpfs:
       - /var/cache/nginx:size=64M
       - /var/run:size=16M
+      - /var/log/nginx:size=16M
       - /tmp:size=32M
     # Resource limits
     deploy:
