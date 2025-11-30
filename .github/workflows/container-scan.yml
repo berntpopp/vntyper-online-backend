@@ -1,0 +1,103 @@
+# .github/workflows/container-scan.yml
+# Container image vulnerability scanning workflow
+#
+# Builds Docker images and scans them for vulnerabilities using Trivy
+# Results are uploaded to GitHub Security tab (SARIF)
+#
+# Runs on: Push/PR when Dockerfile or context files change
+
+name: Container Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'proxy/**'
+      - 'certbot/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'proxy/**'
+      - 'certbot/**'
+  schedule:
+    # Weekly scan to catch new CVEs in base images
+    - cron: '0 1 * * 0'
+  workflow_dispatch:
+    # Allow manual trigger
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ===========================================================================
+  # Build and Scan Container Images
+  # ===========================================================================
+  build-and-scan:
+    name: Build & Scan ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - context: proxy
+            dockerfile: proxy/Dockerfile
+            image: vntyper-proxy
+          - context: certbot
+            dockerfile: certbot/Dockerfile
+            image: vntyper-certbot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Build ${{ matrix.image }} image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: ${{ matrix.image }}:scan
+          # Use GitHub Actions cache for faster builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: '${{ matrix.image }}:scan'
+          format: 'sarif'
+          output: 'trivy-${{ matrix.image }}-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          # Ignore unfixed vulnerabilities (no patch available)
+          ignore-unfixed: true
+          # Exit 0 to allow SARIF upload
+          exit-code: '0'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@5ad83d3202da6e473f763d732b591299ae4e380c # v3
+        with:
+          sarif_file: 'trivy-${{ matrix.image }}-results.sarif'
+          category: 'container-${{ matrix.image }}'
+        continue-on-error: true
+
+      - name: Run Trivy (table output for PR comments)
+        if: github.event_name == 'pull_request'
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: '${{ matrix.image }}:scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+        # Don't fail the job, just report findings
+        continue-on-error: true

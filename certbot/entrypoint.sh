@@ -7,6 +7,15 @@
 set -e  # Exit on error
 
 # ============================================================================
+# Environment Variables (from Docker Compose)
+# ============================================================================
+# These variables are injected by Docker - validate required ones
+SERVER_NAME="${SERVER_NAME:?SERVER_NAME environment variable is required}"
+SERVER_NAME_SUBDOMAIN="${SERVER_NAME_SUBDOMAIN:-www.${SERVER_NAME}}"
+CERTBOT_EMAIL="${CERTBOT_EMAIL:?CERTBOT_EMAIL environment variable is required}"
+CERTBOT_STAGING="${CERTBOT_STAGING:-0}"
+
+# ============================================================================
 # CONFIGURATION
 # ============================================================================
 

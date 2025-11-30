@@ -1,6 +1,6 @@
 # Redirect HTTP to HTTPS
 server {
-    listen 80;
+    listen 8080;
     server_name ${SERVER_NAME};
 
     # Serve ACME challenge
@@ -15,7 +15,7 @@ server {
 
 # HTTPS server for main domain
 server {
-    listen 443 ssl http2;
+    listen 8443 ssl http2;
     server_name ${SERVER_NAME};
 
     ssl_certificate /etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem;
@@ -87,6 +87,13 @@ server {
         proxy_set_header Connection "upgrade";
     }
 
+    # Health check endpoint for container orchestration
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+
     # Deny Access to .env Files
     location ~ /\.env {
         deny all;
@@ -103,7 +110,7 @@ server {
 
 # New HTTPS server block for subdomain to redirect to main domain
 server {
-    listen 443 ssl http2;
+    listen 8443 ssl http2;
     server_name www.${SERVER_NAME};
 
     ssl_certificate /etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem;

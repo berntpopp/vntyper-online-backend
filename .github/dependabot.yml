@@ -1,0 +1,117 @@
+# .github/dependabot.yml
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+#
+# Scope: Main repository only (submodules have their own Dependabot configs)
+
+version: 2
+
+updates:
+  # ==========================================================================
+  # GitHub Actions - Keep CI/CD workflows up to date
+  # ==========================================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    commit-message:
+      prefix: "ci(deps)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    # Limit open PRs to avoid overwhelming reviewers
+    open-pull-requests-limit: 5
+    # Group minor/patch updates together to reduce PR noise
+    groups:
+      github-actions-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ==========================================================================
+  # Docker - Proxy container base image
+  # ==========================================================================
+  - package-ecosystem: "docker"
+    directory: "/proxy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    commit-message:
+      prefix: "build(deps)"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    open-pull-requests-limit: 2
+    # Ignore major version bumps (review manually)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ==========================================================================
+  # Docker - Certbot container base image
+  # ==========================================================================
+  - package-ecosystem: "docker"
+    directory: "/certbot"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    commit-message:
+      prefix: "build(deps)"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    open-pull-requests-limit: 2
+
+  # ==========================================================================
+  # Docker Compose - Service image versions
+  # ==========================================================================
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    commit-message:
+      prefix: "build(deps)"
+    labels:
+      - "dependencies"
+      - "docker-compose"
+      - "automated"
+    open-pull-requests-limit: 3
+    # Group Redis updates
+    groups:
+      docker-compose-images:
+        patterns:
+          - "*"
+
+  # ==========================================================================
+  # Git Submodules - Backend and Frontend repos
+  # ==========================================================================
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "submodules"
+      - "automated"
+    # Keep submodule PRs limited - these need careful review
+    open-pull-requests-limit: 2

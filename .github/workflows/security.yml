@@ -1,0 +1,115 @@
+# .github/workflows/security.yml
+# Security scanning workflow for configuration files and secrets
+#
+# Runs on: Push to main, PRs, and weekly schedule
+# Features:
+#   - Trivy config scanning (Dockerfiles, docker-compose, etc.)
+#   - Gitleaks secret detection
+#   - Results uploaded to GitHub Security tab (SARIF)
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    # Catches new CVEs even without code changes
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    # Allow manual trigger for ad-hoc security checks
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ===========================================================================
+  # Trivy Configuration Scan
+  # Scans Dockerfiles, docker-compose, and IaC files for misconfigurations
+  # ===========================================================================
+  trivy-config:
+    name: Trivy Config Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run Trivy vulnerability scanner (config mode)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-config-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          # Skip submodules - they have their own CI/CD
+          skip-dirs: 'backend,frontend,node_modules,.git'
+          # Exit code 0 to allow SARIF upload even with findings
+          exit-code: '0'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@5ad83d3202da6e473f763d732b591299ae4e380c # v3
+        with:
+          sarif_file: 'trivy-config-results.sarif'
+          category: 'trivy-config'
+        # Don't fail if upload fails (e.g., on forks)
+        continue-on-error: true
+
+  # ===========================================================================
+  # Gitleaks Secret Detection
+  # Scans repository for accidentally committed secrets
+  # ===========================================================================
+  gitleaks:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # Full history needed for scanning all commits
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Report findings but don't fail the build on PRs from forks
+          GITLEAKS_ENABLE_COMMENTS: false
+
+  # ===========================================================================
+  # Trivy Filesystem Scan
+  # Scans for vulnerabilities in lockfiles and dependencies
+  # ===========================================================================
+  trivy-fs:
+    name: Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run Trivy vulnerability scanner (fs mode)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          # Skip submodules
+          skip-dirs: 'backend,frontend,node_modules,.git'
+          exit-code: '0'
+
+      - name: Upload Trivy FS results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@5ad83d3202da6e473f763d732b591299ae4e380c # v3
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-filesystem'
+        continue-on-error: true

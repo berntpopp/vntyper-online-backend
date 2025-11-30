@@ -1,10 +1,17 @@
 server {
-    listen 80;
+    listen 8080;
     server_name ${SERVER_NAME};
 
     # Serve ACME challenge
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
+    }
+
+    # Health check endpoint for container orchestration
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
     }
 
     location / {

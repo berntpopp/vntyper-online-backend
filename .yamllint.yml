@@ -1,0 +1,82 @@
+# .yamllint.yml
+# yamllint configuration for YAML file linting
+# https://github.com/adrienverge/yamllint
+#
+# Run locally: yamllint .
+
+extends: default
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
+
+rules:
+  # Line length - allow longer lines for URLs and commands
+  line-length:
+    max: 150
+    level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # Document start marker (---) - not required
+  document-start: disable
+
+  # Comments formatting
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+
+  # Indentation - 2 spaces, consistent
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Truthy values - allow common boolean representations
+  truthy:
+    allowed-values:
+      - 'true'
+      - 'false'
+      - 'yes'
+      - 'no'
+      - 'on'
+      - 'off'
+    check-keys: false
+
+  # Braces - allow inline for short mappings
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+
+  # Brackets - allow inline for short sequences
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+
+  # Empty lines
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 1
+
+  # Key duplicates - error (these cause real bugs)
+  key-duplicates: enable
+
+  # Trailing spaces - error
+  trailing-spaces: enable
+
+  # New line at end of file
+  new-line-at-end-of-file: enable
+
+# Ignore patterns - exclude submodules and node_modules
+ignore: |
+  backend/
+  frontend/
+  node_modules/
+  .git/

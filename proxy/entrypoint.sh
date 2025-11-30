@@ -1,27 +1,47 @@
 #!/bin/bash
+# proxy/entrypoint.sh
+# Nginx reverse proxy entrypoint with SSL support and auto-reload on certificate changes.
+# Runs as non-root nginx user (from nginx-unprivileged base image).
+# Environment variables are passed from Docker Compose.
 
 set -e
+
+# ==============================================================================
+# Environment Variables (from Docker Compose)
+# ==============================================================================
+: "${SERVER_NAME:?SERVER_NAME environment variable is required}"
+: "${ENVIRONMENT:=local}"
+: "${CLIENT_MAX_BODY_SIZE:=100M}"
 
 CERT_PATH="/etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem"
 KEY_PATH="/etc/letsencrypt/live/${SERVER_NAME}/privkey.pem"
 
+# Template directory (nginx-unprivileged compatible)
+TEMPLATE_DIR="/etc/nginx/templates"
+CONF_DIR="/etc/nginx/conf.d"
+
 # Function to generate Nginx configuration
 generate_nginx_conf() {
+    local template_file
+
     if [ "$ENVIRONMENT" = "production" ]; then
         if [ -f "$CERT_PATH" ] && [ -f "$KEY_PATH" ]; then
             echo "SSL certificates found. Configuring Nginx for HTTPS."
-            envsubst '${SERVER_NAME} ${CLIENT_MAX_BODY_SIZE}' \
-                < /etc/nginx/conf.d/nginx.conf.template.ssl > /etc/nginx/conf.d/default.conf
+            template_file="${TEMPLATE_DIR}/nginx.conf.template.ssl"
         else
             echo "SSL certificates not found. Configuring Nginx for ACME challenge."
-            envsubst '${SERVER_NAME} ${CLIENT_MAX_BODY_SIZE}' \
-                < /etc/nginx/conf.d/nginx.conf.template.acme > /etc/nginx/conf.d/default.conf
+            template_file="${TEMPLATE_DIR}/nginx.conf.template.acme"
         fi
     else
         echo "Configuring Nginx for HTTP (development)."
-        envsubst '${SERVER_NAME} ${CLIENT_MAX_BODY_SIZE}' \
-            < /etc/nginx/conf.d/nginx.conf.template.http > /etc/nginx/conf.d/default.conf
+        template_file="${TEMPLATE_DIR}/nginx.conf.template.http"
     fi
+
+    # Generate config from template
+    envsubst '${SERVER_NAME} ${CLIENT_MAX_BODY_SIZE}' \
+        < "$template_file" > "${CONF_DIR}/default.conf"
+
+    echo "Configuration generated: ${CONF_DIR}/default.conf"
 }
 
 # Start certificate monitor in background to automatically reload Nginx when the certificate changes
@@ -39,17 +59,20 @@ monitor_certs() {
 
     # Monitor for certificate changes (renewals)
     while inotifywait -e close_write,moved_to "$CERT_PATH" 2>/dev/null; do
-        echo "Certificate file changed. Reloading Nginx..."
+        echo "Certificate file changed. Regenerating config and reloading Nginx..."
+        generate_nginx_conf
         # Test config before reload to prevent downtime from invalid config
         nginx -t 2>/dev/null && nginx -s reload && echo "Nginx reloaded successfully" || echo "ERROR: Nginx reload failed"
     done
 }
 
-# Generate Nginx configuration
+# Generate initial Nginx configuration
 generate_nginx_conf
 
-# Start the certificate monitor in the background
-monitor_certs &
+# Start the certificate monitor in the background (only in production)
+if [ "$ENVIRONMENT" = "production" ]; then
+    monitor_certs &
+fi
 
-# Start Nginx in the foreground
-nginx -g 'daemon off;'
+# Execute the CMD (nginx)
+exec "$@"

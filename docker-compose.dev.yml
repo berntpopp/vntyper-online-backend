@@ -1,11 +1,30 @@
 # docker-compose.dev.yml
-# Development overrides for docker-compose.yml
-# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# =============================================================================
+# VNtyper Online - Development Overrides
+# =============================================================================
+# This file extends docker-compose.yml with development-specific configuration:
+# - FastAPI dev mode with auto-reload for backend_api
+# - Volume mounts for live code changes
+# - Disabled proxy/frontend (use Python http.server for frontend)
+# - Relaxed restart policies for easier debugging
+#
+# Note: Security hardening (security_opt, cap_drop, resource limits) is
+# inherited from docker-compose.yml. These are kept in dev for consistency
+# but can be commented out if causing issues during debugging.
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#   # Or use the helper script:
+#   ./dev.sh up
+# =============================================================================
 
 services:
+  # ===========================================================================
+  # Backend API - Development Mode with Auto-Reload
+  # ===========================================================================
   backend_api:
-    # Override entrypoint and command to use fastapi dev with auto-reload (2025 best practice)
-    # Note: fastapi dev has --reload enabled by default, no need to specify it
+    # Override entrypoint and command to use fastapi dev with auto-reload
+    # Note: fastapi dev has --reload enabled by default
     entrypoint: ["/bin/bash", "-c"]
     command: ["source /opt/conda/etc/profile.d/conda.sh && conda run -n vntyper fastapi dev app/main.py --host 0.0.0.0 --port 8000"]
     volumes:
@@ -22,10 +41,24 @@ services:
     # Remove restart policy for development (easier debugging)
     restart: "no"
 
-  # Celery workers - Note: Celery doesn't support auto-reload by default
+  # ===========================================================================
+  # Celery Workers - Development Overrides
+  # ===========================================================================
+  # Note: Celery doesn't support auto-reload by default.
   # You must manually restart workers after code changes:
-  # docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart backend_worker backend_worker_vntyper
+  #   docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart \
+  #     backend_worker backend_worker_vntyper backend_worker_vntyper_long
+
   backend_worker_vntyper:
+    volumes:
+      - ./backend/docker/app:/opt/vntyper/app:rw
+      - ${INPUT_VOLUME}:/opt/vntyper/input
+      - ${OUTPUT_VOLUME}:/opt/vntyper/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: "no"
+
+  backend_worker_vntyper_long:
     volumes:
       - ./backend/docker/app:/opt/vntyper/app:rw
       - ${INPUT_VOLUME}:/opt/vntyper/input
@@ -52,8 +85,12 @@ services:
       - PYTHONUNBUFFERED=1
     restart: "no"
 
-  # Disable proxy in development (use Python http.server for frontend)
+  # ===========================================================================
+  # Disabled Services in Development
+  # ===========================================================================
+  # Proxy and frontend are disabled - use Python http.server for frontend
   # and direct access to backend_api:8000
+
   proxy:
     profiles:
       - production  # Only run proxy in production profile
