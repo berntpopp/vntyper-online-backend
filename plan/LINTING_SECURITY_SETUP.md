@@ -790,7 +790,7 @@ Use GitHub Secrets for CI/CD:
 ## Sources
 
 ### Linting Tools
-- [Hadolint - Dockerfile linter](https://hadolint.com/)
+- [Hadolint - Dockerfile linter](https://github.com/hadolint/hadolint)
 - [Hadolint GitHub Action](https://github.com/hadolint/hadolint-action)
 - [ShellCheck - Shell script linter](https://github.com/koalaman/shellcheck)
 - [ShellCheck Pre-commit Hook](https://github.com/koalaman/shellcheck-precommit)
