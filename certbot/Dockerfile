@@ -23,12 +23,19 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 
 # Upgrade base packages and pip for security fixes
 # - CVE-2024-58251, CVE-2025-46394: busybox vulnerabilities
+# - CVE-2025-6965: sqlite integer truncation (fixed via apk upgrade)
 # - CVE-2025-8869: pip symbolic link extraction vulnerability
 # - CVE-2025-66418, CVE-2025-66471: urllib3 decompression vulnerabilities
+# - CVE-2026-26007: cryptography subgroup attack on SECT curves
+# - CVE-2026-24049: wheel privilege escalation via malicious wheel files
+# - CVE-2026-23949: jaraco.context path traversal via malicious tar archives
 # hadolint ignore=DL3013
 RUN apk upgrade --no-cache \
     && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir "urllib3>=2.6.0" \
+    && pip install --no-cache-dir "cryptography>=46.0.5" \
+    && pip install --no-cache-dir "wheel>=0.46.2" \
+    && pip install --no-cache-dir "jaraco.context>=6.1.0" \
     && pip uninstall -y uv 2>/dev/null || true
 
 # Create non-root user for certbot operations
