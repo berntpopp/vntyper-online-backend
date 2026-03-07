@@ -69,8 +69,8 @@ services:
   # ===========================================================================
   backend_api:
     build:
-      context: ./backend/docker
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: docker/Dockerfile
     image: vntyper:latest
     container_name: vntyper_backend_api
     # Security hardening
@@ -113,8 +113,8 @@ services:
   # ===========================================================================
   backend_worker_vntyper:
     build:
-      context: ./backend/docker
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: docker/Dockerfile
     image: vntyper:latest
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
@@ -155,8 +155,8 @@ services:
   # ===========================================================================
   backend_worker_vntyper_long:
     build:
-      context: ./backend/docker
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: docker/Dockerfile
     image: vntyper:latest
     container_name: vntyper_online_worker_vntyper_long
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_long_queue"]
@@ -197,8 +197,8 @@ services:
   # ===========================================================================
   backend_worker:
     build:
-      context: ./backend/docker
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: docker/Dockerfile
     image: vntyper:latest
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "-Q", "celery"]
@@ -239,8 +239,8 @@ services:
   # ===========================================================================
   backend_beat:
     build:
-      context: ./backend/docker
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: docker/Dockerfile
     image: vntyper:latest
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
