@@ -11,7 +11,7 @@
 
 # Pin base image with digest for supply chain security
 # nginxinc/nginx-unprivileged:1.27.3-alpine-slim
-FROM nginxinc/nginx-unprivileged:1.29.5-alpine-slim@sha256:800307aaf07c143f5d90aa9d4269cc1971dcfe5aee7cabd11579ac4c6bcf198f
+FROM nginxinc/nginx-unprivileged:1.29.5-alpine-slim@sha256:0e5af054d6a0ed8b1760e52d2fc91968cf85b0a60738d49567d3775a68cfadc2
 
 # OCI Labels for image metadata and traceability
 LABEL org.opencontainers.image.title="VNtyper Proxy" \
