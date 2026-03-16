@@ -16,6 +16,17 @@ server {
     gzip_comp_level 5;                       # Compression level (1-9, tradeoff between speed and compression)
     gzip_vary on;                            # Add Vary: Accept-Encoding header for proxies and CDN compatibility
 
+    # Cache static assets aggressively (frontend uses ?v= query params for cache busting)
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff2?|ttf|eot)$ {
+        proxy_pass http://frontend:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
     # Serve Frontend Static Files
     location / {
         proxy_pass http://frontend:80;
