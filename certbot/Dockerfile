@@ -10,8 +10,8 @@
 # =============================================================================
 
 # Pin base image with version and digest for supply chain security
-# certbot/certbot:v3.0.1
-FROM certbot/certbot:v5.3.1@sha256:8be9c9f10232e223acd84acdacc26858fcd46e8194c6dcdf99b2ddd231a362fe
+# certbot/certbot:v5.6.0
+FROM certbot/certbot:v5.6.0@sha256:0107d084c225631fc64a8313e19adb07275f7296fde338f7dfa93986c80b2e3e
 
 # OCI Labels for image metadata and traceability
 LABEL org.opencontainers.image.title="VNtyper Certbot" \
@@ -25,17 +25,27 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 # - CVE-2024-58251, CVE-2025-46394: busybox vulnerabilities
 # - CVE-2025-6965: sqlite integer truncation (fixed via apk upgrade)
 # - CVE-2025-8869: pip symbolic link extraction vulnerability
-# - CVE-2025-66418, CVE-2025-66471: urllib3 decompression vulnerabilities
+# - CVE-2026-44432, CVE-2026-44431: urllib3 streaming decompression bomb and
+#   cross-origin redirect header leak (fixed in 2.7.0)
 # - CVE-2026-26007: cryptography subgroup attack on SECT curves
 # - CVE-2026-24049: wheel privilege escalation via malicious wheel files
 # - CVE-2026-23949: jaraco.context path traversal via malicious tar archives
+# - CVE-2026-27459, CVE-2026-27448: pyOpenSSL DTLS cookie callback buffer
+#   overflow and TLS servername callback bypass (fixed in 26.0.0)
+# - CVE-2026-45409: idna idna.encode() bypass of the CVE-2024-3651
+#   quadratic-complexity fix (fixed in 3.15)
+# - CVE-2026-25645: requests predictable temp file in extract_zipped_paths()
+#   (fixed in 2.33.0)
 # hadolint ignore=DL3013
 RUN apk upgrade --no-cache \
     && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir "urllib3>=2.6.0" \
+    && pip install --no-cache-dir "urllib3>=2.7.0" \
     && pip install --no-cache-dir "cryptography>=46.0.5" \
     && pip install --no-cache-dir "wheel>=0.46.2" \
     && pip install --no-cache-dir "jaraco.context>=6.1.0" \
+    && pip install --no-cache-dir "pyOpenSSL>=26.0.0" \
+    && pip install --no-cache-dir "idna>=3.15" \
+    && pip install --no-cache-dir "requests>=2.33.0" \
     && pip uninstall -y uv 2>/dev/null || true
 
 # Create non-root user for certbot operations
