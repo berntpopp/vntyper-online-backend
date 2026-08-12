@@ -108,7 +108,14 @@ Create and configure the `.env.production` file with your production settings. *
         # Celery Configuration
         CELERY_BROKER_URL=redis://redis:6379/0
         CELERY_RESULT_BACKEND=redis://redis:6379/0
-        MAX_RESULT_AGE_DAYS=7
+        # How long a completed job's result archive stays retrievable, in days.
+        # /download/{job_id}/ is an unauthenticated capability URL, so this value is
+        # the exposure window for a completed job. Keep it as short as collection
+        # allows: `vntyper online` polls for at most 4 hours and the completion email
+        # states no deadline, so the binding case is a person reading that email
+        # later -- 3 days covers submit-Friday, download-Monday.
+        # This file overrides the image default, so it is the value that governs.
+        MAX_RESULT_AGE_DAYS=3
 
         # Application Paths
         INPUT_VOLUME=/directory/out/download
