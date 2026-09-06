@@ -28,6 +28,15 @@ CLAUDE.md
 # vscode settings
 .vscode
 
+# Local development storage and scratch data
+dev_storage/
+test-results/
+playwright-report/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
 # Deployment
 .deploy/
 server_key
