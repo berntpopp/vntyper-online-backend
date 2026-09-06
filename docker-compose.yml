@@ -43,7 +43,7 @@ services:
     entrypoint: ["redis-server"]
     command:
       - --requirepass
-      - ${REDIS_PASSWORD:-defaultpassword}
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       - --appendonly
       - "yes"
       - --dir
@@ -53,14 +53,47 @@ services:
       - --maxmemory-policy
       - allkeys-lru
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-defaultpassword}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
     networks:
       - vntyper_network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-defaultpassword}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}", "ping"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ===========================================================================
+  # PostgreSQL - Relational database for anonymous research data donations
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine@sha256:d13e33e145eb548f4cf2fa17ff2b38f83ac0f5e1f0217ec56ecba789d2c4b574
+    container_name: vntyper_online_postgres
+    user: "postgres"
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-vntyper_donations}
+      - POSTGRES_USER=${POSTGRES_USER:-vntyper_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vntyper_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vntyper -d vntyper"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 10s
     restart: unless-stopped
 
@@ -71,7 +104,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: vntyper:latest
+    image: vntyper:2.0.29
     container_name: vntyper_backend_api
     # Security hardening
     security_opt:
@@ -96,6 +129,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     networks:
       - vntyper_network
     ports:
@@ -115,7 +150,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: vntyper:latest
+    image: vntyper:2.0.29
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
     # Security hardening
@@ -157,7 +192,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: vntyper:latest
+    image: vntyper:2.0.29
     container_name: vntyper_online_worker_vntyper_long
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_long_queue"]
     # Security hardening
@@ -199,7 +234,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: vntyper:latest
+    image: vntyper:2.0.29
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "-Q", "celery"]
     # Security hardening
@@ -241,7 +276,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: vntyper:latest
+    image: vntyper:2.0.29
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     # Security hardening
@@ -373,3 +408,4 @@ networks:
 # =============================================================================
 volumes:
   redis_data:
+  postgres_data:
