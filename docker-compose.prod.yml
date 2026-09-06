@@ -27,8 +27,9 @@ services:
       - /var/www/certbot:/var/www/certbot
       - ./proxy/nginx.conf.template.http:/etc/nginx/templates/nginx.conf.template.http:ro
       - ./proxy/nginx.conf.template.ssl:/etc/nginx/templates/nginx.conf.template.ssl:ro
+      - ./proxy/nginx.conf.template.acme:/etc/nginx/templates/nginx.conf.template.acme:ro
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
 
   # ===========================================================================
   # Certbot - SSL Certificate Manager (Let's Encrypt) - Non-Root
@@ -62,7 +63,7 @@ services:
       - /etc/ssl/certs/vntyper:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
     depends_on:
       proxy:
         condition: service_healthy
@@ -75,23 +76,23 @@ services:
   # ===========================================================================
   backend_api:
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
 
   backend_worker_vntyper:
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
 
   backend_worker_vntyper_long:
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
 
   backend_worker:
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
 
   backend_beat:
     env_file:
-      - .env.production
+      - ${ENV_FILE:-.env.production}
 
 networks:
   vntyper_network:

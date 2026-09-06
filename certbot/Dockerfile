@@ -10,8 +10,8 @@
 # =============================================================================
 
 # Pin base image with version and digest for supply chain security
-# certbot/certbot:v5.6.0
-FROM certbot/certbot:v5.7.0@sha256:6bb19cff0b3972a69855686e0ccbd20b98dbfae2aa43845a5df48947ba1401b4
+# certbot/certbot:v5.7.0
+FROM certbot/certbot:v5.7.0@sha256:34ee91d2f43008eb78a007d22f23ed4b2eaa9a454cb27ca2c042b49527a695b4
 
 # OCI Labels for image metadata and traceability
 LABEL org.opencontainers.image.title="VNtyper Certbot" \
@@ -27,7 +27,7 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 # - CVE-2025-8869: pip symbolic link extraction vulnerability
 # - CVE-2026-44432, CVE-2026-44431: urllib3 streaming decompression bomb and
 #   cross-origin redirect header leak (fixed in 2.7.0)
-# - CVE-2026-26007: cryptography subgroup attack on SECT curves
+# - CVE-2026-26007, CVE-2026-69247, CVE-2026-69248, CVE-2026-69249: cryptography fixes (>=50.0.0)
 # - CVE-2026-24049: wheel privilege escalation via malicious wheel files
 # - CVE-2026-23949: jaraco.context path traversal via malicious tar archives
 # - CVE-2026-27459, CVE-2026-27448: pyOpenSSL DTLS cookie callback buffer
@@ -36,17 +36,24 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 #   quadratic-complexity fix (fixed in 3.15)
 # - CVE-2026-25645: requests predictable temp file in extract_zipped_paths()
 #   (fixed in 2.33.0)
+# - CVE-2025-47273, CVE-2026-59890: setuptools vulnerabilities (fixed in >=83.0.0)
+# - GHSA-6v7p-g79w-8964: msgpack unpacker reuse denial of service (fixed in >=1.2.1)
 # hadolint ignore=DL3013
 RUN apk upgrade --no-cache \
     && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir "urllib3>=2.7.0" \
-    && pip install --no-cache-dir "cryptography>=46.0.5" \
+    && pip install --no-cache-dir "pyOpenSSL>=26.4.0" \
+    && pip install --no-cache-dir "cryptography>=50.0.0" \
     && pip install --no-cache-dir "wheel>=0.46.2" \
     && pip install --no-cache-dir "jaraco.context>=6.1.0" \
-    && pip install --no-cache-dir "pyOpenSSL>=26.0.0" \
     && pip install --no-cache-dir "idna>=3.15" \
     && pip install --no-cache-dir "requests>=2.33.0" \
-    && pip uninstall -y uv 2>/dev/null || true
+    && pip install --no-cache-dir "setuptools>=83.0.0" \
+    && pip install --no-cache-dir "msgpack>=1.2.1" \
+    && pip uninstall -y uv 2>/dev/null || true \
+    && find /usr/local/lib/python* -name "*.cdx.json" -delete 2>/dev/null || true \
+    && find /usr/local/lib/python* -name "*.cyclonedx.json" -delete 2>/dev/null || true \
+    && rm -rf /root/.cache
 
 # Create non-root user for certbot operations
 # UID 1000 chosen for compatibility with typical host user mappings

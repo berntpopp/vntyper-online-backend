@@ -47,6 +47,21 @@ MIN_VALIDITY_SECONDS=$((MIN_VALIDITY_DAYS * 24 * 3600))
 RENEWAL_INTERVAL=43200
 
 # ============================================================================
+# ============================================================================
+# DOMAIN ARGUMENTS & PERMISSIONS HELPERS
+# ============================================================================
+
+DOMAIN_ARGS="-d $SERVER_NAME"
+if [ -n "$SERVER_NAME_SUBDOMAIN" ] && [ "$SERVER_NAME_SUBDOMAIN" != "$SERVER_NAME" ] && [ "$SERVER_NAME_SUBDOMAIN" != "none" ]; then
+    DOMAIN_ARGS="$DOMAIN_ARGS -d $SERVER_NAME_SUBDOMAIN"
+fi
+
+fix_permissions() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Ensuring certificate files are readable by Nginx proxy..."
+    chmod -R a+rX /etc/letsencrypt/live /etc/letsencrypt/archive 2>/dev/null || true
+}
+
+# ============================================================================
 # STARTUP DELAY - Fix race condition with proxy container
 # ============================================================================
 
@@ -66,6 +81,7 @@ echo "========================================="
 
 if [ -f "$CERT_FILE" ]; then
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Certificate file found: $CERT_FILE"
+    fix_permissions
 
     # Validate certificate expiration
     if openssl x509 -checkend "$MIN_VALIDITY_SECONDS" -noout -in "$CERT_FILE" 2>/dev/null; then
@@ -79,15 +95,16 @@ if [ -f "$CERT_FILE" ]; then
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] Requesting renewal..."
 
         # Attempt renewal
+        # shellcheck disable=SC2086
         if certbot certonly --webroot -w /var/www/certbot \
-            -d "$SERVER_NAME" \
-            -d "$SERVER_NAME_SUBDOMAIN" \
+            $DOMAIN_ARGS \
             --email "$CERTBOT_EMAIL" \
             --agree-tos \
             --non-interactive \
             --keep-until-expiring \
             $STAGING_ARG; then
             echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Certificate renewed successfully"
+            fix_permissions
         else
             echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ ERROR: Certificate renewal failed (exit code $?)"
             echo "[$(date +'%Y-%m-%d %H:%M:%S')] Will retry in renewal loop..."
@@ -97,15 +114,16 @@ else
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] No certificate found. Requesting new certificate..."
 
     # Request new certificate
+    # shellcheck disable=SC2086
     if certbot certonly --webroot -w /var/www/certbot \
-        -d "$SERVER_NAME" \
-        -d "$SERVER_NAME_SUBDOMAIN" \
+        $DOMAIN_ARGS \
         --email "$CERTBOT_EMAIL" \
         --agree-tos \
         --non-interactive \
         $STAGING_ARG; then
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Certificate acquired successfully"
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  Proxy container will auto-reload nginx via inotifywait"
+        fix_permissions
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  Proxy container will detect certificate and configure SSL"
     else
         EXIT_CODE=$?
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ ERROR: Certificate acquisition failed (exit code $EXIT_CODE)"
@@ -141,38 +159,35 @@ while true; do
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Renewal Check #$ITERATION"
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] ========================================="
 
-    # Run certbot renew
-    # Exit codes: 0 = success or no renewal needed, 1 = renewal failed
-    if certbot renew --webroot -w /var/www/certbot --quiet; then
+    # Run certbot renew using the saved configuration in /etc/letsencrypt/renewal/
+    # Deploy hook automatically sets read permissions on newly issued certificates
+    if certbot renew --non-interactive --deploy-hook "chmod -R a+rX /etc/letsencrypt/live /etc/letsencrypt/archive"; then
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Renewal check completed successfully"
+        fix_permissions
 
         # Check if certificate was actually renewed (modification time check)
         if [ -f "$CERT_FILE" ]; then
-            # Get certificate modification time
-            # -c %Y for Linux (GNU/BusyBox), -f %m for BSD/macOS (fallback)
             CERT_AGE=$(stat -c %Y "$CERT_FILE" 2>/dev/null || stat -f %m "$CERT_FILE" 2>/dev/null)
             CURRENT_TIME=$(date +%s)
             SECONDS_SINCE_MODIFIED=$((CURRENT_TIME - CERT_AGE))
 
-            if [ $SECONDS_SINCE_MODIFIED -lt $RENEWAL_INTERVAL ]; then
-                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Certificate was recently renewed"
-                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  Proxy container will detect change and reload nginx"
+            if [ "$SECONDS_SINCE_MODIFIED" -lt "$RENEWAL_INTERVAL" ]; then
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Certificate was renewed (updated $SECONDS_SINCE_MODIFIED seconds ago)"
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  Proxy container will reload Nginx automatically"
             else
-                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  No renewal performed (certificate not yet due)"
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  No renewal required yet (certificate still valid)"
             fi
         fi
     else
         EXIT_CODE=$?
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ ERROR: Renewal check failed (exit code $EXIT_CODE)"
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Check logs above for details"
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] Will retry at next interval"
     fi
 
-    # Display next check time (simplified - no complex date math)
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Next check in 12 hours"
     echo ""
 
     # Sleep for 12 hours (using background sleep + wait for proper signal handling)
-    sleep $RENEWAL_INTERVAL &
+    sleep "$RENEWAL_INTERVAL" &
     wait $!
 done

@@ -44,25 +44,69 @@ generate_nginx_conf() {
     echo "Configuration generated: ${CONF_DIR}/default.conf"
 }
 
-# Start certificate monitor in background to automatically reload Nginx when the certificate changes
+# Start certificate monitor in background to automatically reload Nginx when certificates change
 monitor_certs() {
-    echo "Starting certificate monitor..."
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Starting certificate monitor..."
 
-    # Wait for certificate to appear (check every 60 seconds)
-    # This handles first-time deployments where cert doesn't exist yet
-    while [ ! -f "$CERT_PATH" ]; do
-        echo "Waiting for certificate to be created: $CERT_PATH"
-        sleep 60
-    done
+    local current_hash=""
+    local live_dir="/etc/letsencrypt/live/${SERVER_NAME}"
+    local archive_dir="/etc/letsencrypt/archive/${SERVER_NAME}"
 
-    echo "Certificate detected. Starting inotifywait monitoring: $CERT_PATH"
+    get_cert_hash() {
+        if [ -f "$CERT_PATH" ] && [ -f "$KEY_PATH" ]; then
+            # -L follows symlinks so hash changes when cert is renewed in archive
+            sha256sum -L "$CERT_PATH" 2>/dev/null | awk '{print $1}'
+        fi
+    }
 
-    # Monitor for certificate changes (renewals)
-    while inotifywait -e close_write,moved_to "$CERT_PATH" 2>/dev/null; do
-        echo "Certificate file changed. Regenerating config and reloading Nginx..."
+    # Handle first-time deployment where certificates don't exist yet
+    if [ ! -f "$CERT_PATH" ] || [ ! -f "$KEY_PATH" ]; then
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Waiting for initial certificates to appear: $CERT_PATH"
+        while [ ! -f "$CERT_PATH" ] || [ ! -f "$KEY_PATH" ]; do
+            sleep 10
+        done
+
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Initial certificate detected! Generating HTTPS configuration and reloading Nginx..."
         generate_nginx_conf
-        # Test config before reload to prevent downtime from invalid config
-        nginx -t 2>/dev/null && nginx -s reload && echo "Nginx reloaded successfully" || echo "ERROR: Nginx reload failed"
+        if nginx -t 2>/dev/null; then
+            nginx -s reload && echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Nginx successfully reloaded into HTTPS mode"
+        else
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ ERROR: Initial Nginx HTTPS configuration validation failed"
+        fi
+    fi
+
+    current_hash=$(get_cert_hash)
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Active certificate fingerprint: ${current_hash:0:16}..."
+
+    # Continuous monitoring loop
+    while true; do
+        # Use inotifywait on directories with a 300s timeout fallback
+        # Watching directories catches new archive certs and symlink replacements
+        if command -v inotifywait >/dev/null 2>&1; then
+            inotifywait -t 300 -q -e create,moved_to,close_write,delete,attrib \
+                "$live_dir" "$archive_dir" "/etc/letsencrypt/live" 2>/dev/null || true
+        else
+            sleep 300
+        fi
+
+        # Compare certificate hash
+        local new_hash
+        new_hash=$(get_cert_hash)
+
+        if [ -n "$new_hash" ] && [ "$new_hash" != "$current_hash" ]; then
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] 🔄 Certificate change detected! (new fingerprint: ${new_hash:0:16}...)"
+            generate_nginx_conf
+            if nginx -t 2>/dev/null; then
+                if nginx -s reload; then
+                    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Nginx reloaded successfully with updated certificate"
+                    current_hash="$new_hash"
+                else
+                    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ ERROR: Nginx reload failed"
+                fi
+            else
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ ERROR: Nginx configuration test failed; reload aborted"
+            fi
+        fi
     done
 }
 
