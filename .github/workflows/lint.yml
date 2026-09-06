@@ -144,6 +144,7 @@ jobs:
           REDIS_PASSWORD=dummypassword
           REDIS_HOST=redis
           REDIS_PORT=6379
+          POSTGRES_PASSWORD=dummypassword
           EOF
 
           # Create minimal .env.production for docker-compose validation
@@ -155,20 +156,24 @@ jobs:
           REDIS_PASSWORD=dummypassword
           REDIS_HOST=redis
           REDIS_PORT=6379
+          POSTGRES_PASSWORD=dummypassword
           CERTBOT_EMAIL=test@example.com
           CERTBOT_STAGING=1
           EOF
 
       - name: Validate docker-compose.yml
-        run: docker compose -f docker-compose.yml config --quiet
+        run: docker compose --env-file .env.local -f docker-compose.yml config --quiet
         env:
           INPUT_VOLUME: /tmp/input
           OUTPUT_VOLUME: /tmp/output
           ENV_FILE: .env.local
+          REDIS_PASSWORD: dummypassword
+          POSTGRES_PASSWORD: dummypassword
 
       - name: Validate docker-compose.dev.yml overlay
         run: |
           docker compose \
+            --env-file .env.local \
             -f docker-compose.yml \
             -f docker-compose.dev.yml \
             config --quiet
@@ -176,10 +181,13 @@ jobs:
           INPUT_VOLUME: /tmp/input
           OUTPUT_VOLUME: /tmp/output
           ENV_FILE: .env.local
+          REDIS_PASSWORD: dummypassword
+          POSTGRES_PASSWORD: dummypassword
 
       - name: Validate docker-compose.prod.yml overlay
         run: |
           docker compose \
+            --env-file .env.production \
             -f docker-compose.yml \
             -f docker-compose.prod.yml \
             config --quiet
@@ -187,3 +195,5 @@ jobs:
           INPUT_VOLUME: /tmp/input
           OUTPUT_VOLUME: /tmp/output
           ENV_FILE: .env.production
+          REDIS_PASSWORD: dummypassword
+          POSTGRES_PASSWORD: dummypassword

@@ -28,6 +28,10 @@ ignored:
   # Rationale: Same as DL3008 for Alpine-based images
   - DL3018
 
+  # DL3025: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+  # Rationale: Shell form is required for healthcheck commands with conditional logic
+  - DL3025
+
 # Override rule severity
 override:
   # Downgrade to warning (won't fail CI)

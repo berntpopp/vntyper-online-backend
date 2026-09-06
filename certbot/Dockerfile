@@ -77,6 +77,7 @@ USER certbot
 
 # Health check - verify certbot is functional
 # Uses a longer interval since certbot operations are infrequent
+# hadolint ignore=DL3025
 HEALTHCHECK --interval=300s --timeout=30s --start-period=60s --retries=2 \
     CMD certbot certificates --quiet || exit 0
 

@@ -63,6 +63,7 @@ USER nginx
 EXPOSE 8080 8443
 
 # Health check - verify nginx is responding
+# hadolint ignore=DL3025
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -sf http://localhost:8080/health || exit 1
 
