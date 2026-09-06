@@ -135,7 +135,8 @@ services:
     networks:
       - vntyper_network
     ports:
-      - "8000:8000"
+      # Bind to loopback only; public access must go through proxy (Nginx)
+      - "127.0.0.1:8000:8000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8000/api/health/"]
