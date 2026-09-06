@@ -125,6 +125,7 @@ services:
       - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
+      - handoff_spool:/opt/vntyper/handoff
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
     depends_on:
       redis:
@@ -171,6 +172,7 @@ services:
       - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
+      - handoff_spool:/opt/vntyper/handoff
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
     depends_on:
       redis:
@@ -213,6 +215,7 @@ services:
       - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
+      - handoff_spool:/opt/vntyper/handoff
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
     depends_on:
       redis:
@@ -255,6 +258,7 @@ services:
       - ${ENV_FILE:-.env.local}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
+      - handoff_spool:/opt/vntyper/handoff
       - ${OUTPUT_VOLUME}:/opt/vntyper/output
     depends_on:
       redis:
@@ -409,3 +413,4 @@ networks:
 volumes:
   redis_data:
   postgres_data:
+  handoff_spool:
