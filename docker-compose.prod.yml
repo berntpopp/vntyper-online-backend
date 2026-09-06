@@ -75,22 +75,27 @@ services:
   # Backend Services - Production Environment File Overrides
   # ===========================================================================
   backend_api:
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_worker_vntyper:
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_worker_vntyper_long:
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_worker:
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_beat:
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
     env_file:
       - ${ENV_FILE:-.env.production}
 

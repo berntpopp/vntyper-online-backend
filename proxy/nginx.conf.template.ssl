@@ -86,6 +86,9 @@ server {
         add_header Cache-Control "public, no-cache";
     }
 
+    # Disable port in redirect to prevent appending container port 8443 on public URLs
+    port_in_redirect off;
+
     # Serve Frontend Static Files
     location / {
         proxy_pass http://frontend:80;
@@ -93,6 +96,14 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Redirect /api and /api/ directly to the interactive documentation
+    location = /api {
+        return 301 /api/docs;
+    }
+    location = /api/ {
+        return 301 /api/docs;
     }
 
     # Proxy API Requests to Backend API
