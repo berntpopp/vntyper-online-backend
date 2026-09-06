@@ -32,3 +32,7 @@ CLAUDE.md
 .deploy/
 server_key
 *.ppk
+
+# Certbot runtime certificates
+certbot/conf/
+certbot/www/
