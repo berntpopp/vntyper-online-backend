@@ -98,12 +98,21 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Redirect /api and /api/ directly to the interactive documentation
+    # Redirect /api and documentation endpoints directly to interactive documentation
     location = /api {
-        return 301 /api/docs;
+        return 302 /api/docs;
     }
     location = /api/ {
-        return 301 /api/docs;
+        return 302 /api/docs;
+    }
+    location = /docs {
+        return 302 /api/docs;
+    }
+    location = /docs/ {
+        return 302 /api/docs;
+    }
+    location = /redoc {
+        return 302 /api/redoc;
     }
 
     # Proxy API Requests to Backend API
