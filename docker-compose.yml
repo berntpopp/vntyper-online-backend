@@ -123,6 +123,11 @@ services:
           memory: 512M
     env_file:
       - ${ENV_FILE:-.env.local}
+    environment:
+      # Both analysis modes are fast enough to be on by default; the env file
+      # can still set either to false, and users can untick them per job.
+      DEFAULT_ADVNTR_MODE: ${DEFAULT_ADVNTR_MODE:-true}
+      DEFAULT_NORMAL_MODE: ${DEFAULT_NORMAL_MODE:-true}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - handoff_spool:/opt/vntyper/handoff
