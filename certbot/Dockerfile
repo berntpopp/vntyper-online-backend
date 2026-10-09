@@ -10,7 +10,7 @@
 # =============================================================================
 
 # Pin base image with version and digest for supply chain security
-# certbot/certbot:v5.7.0
+# certbot/certbot:v5.8.0
 FROM certbot/certbot:v5.8.0@sha256:f70ad0adbb7e117f0fe42a63c553f28ea451edabc0148757b6efcd9735acaa20
 
 # OCI Labels for image metadata and traceability
@@ -32,6 +32,7 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 # - CVE-2026-23949: jaraco.context path traversal via malicious tar archives
 # - CVE-2026-27459, CVE-2026-27448: pyOpenSSL DTLS cookie callback buffer
 #   overflow and TLS servername callback bypass (fixed in 26.0.0)
+# - CVE-2026-97687, CVE-2026-97688, CVE-2026-97689: urllib3 (fixed in 2.8.0)
 # - CVE-2026-45409: idna idna.encode() bypass of the CVE-2024-3651
 #   quadratic-complexity fix (fixed in 3.15)
 # - CVE-2026-25645: requests predictable temp file in extract_zipped_paths()
@@ -41,7 +42,7 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
 # hadolint ignore=DL3013
 RUN apk upgrade --no-cache \
     && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir "urllib3>=2.7.0" \
+    && pip install --no-cache-dir "urllib3>=2.8.0" \
     && pip install --no-cache-dir "pyOpenSSL>=26.4.0" \
     && pip install --no-cache-dir "cryptography>=50.0.0" \
     && pip install --no-cache-dir "wheel>=0.46.2" \
