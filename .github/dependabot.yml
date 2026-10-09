@@ -96,6 +96,10 @@ updates:
       docker-compose-images:
         patterns:
           - "*"
+    # Ignore major version bumps (review manually; a Postgres major needs a data migration)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # ==========================================================================
   # Git Submodules - Backend and Frontend repos
