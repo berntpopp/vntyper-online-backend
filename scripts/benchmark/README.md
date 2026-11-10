@@ -12,8 +12,10 @@ Per BAM it:
    result, and records upload, queue, compute, download and end-to-end time. It uses
    `submitted_at`/`started_at`/`completed_at` from `/job-status/` when the API returns
    them, otherwise it times from polling, accurate to the `--poll` interval;
-3. runs the same slice through the pinned image locally and records wall-clock time;
-4. compares the two `kestrel/kestrel_result.tsv` files: sample status, variant set
+3. runs the same slice through the pinned image locally (as the calling user, `--user $(id -u):$(id -g)`,
+   so outputs are yours) and records wall-clock time;
+4. compares the two `kestrel/kestrel_result.tsv` files (found by name anywhere in the result zip
+   and local output dir, preferring a `kestrel/` parent): sample status, variant set
    (Motif:POS:REF:ALT), Confidence and Flag. Only unflagged calls are positive. Flagged
    calls are reported as `flagged`. 4-bp insertion artifacts are reported as `artifact`
    and never count as positive.
@@ -35,6 +37,10 @@ scripts/benchmark/r17_online_vs_local.py sample1.bam sample2.bam \
 ```
 
 Drop `--dry-run` for the real run. Outputs: `r17_out/per_sample.tsv`, `r17_out/summary.json`.
+
+`per_sample.tsv` is written row by row. A failed online or local run of one sample is
+recorded in its `error` column (online timings already measured are kept) and the run
+continues with the next sample.
 
 Run it against production only in an announced window, with approval: every submission
 is a real job on the shared single-worker queue (`--concurrency=1`) and delays other users.

@@ -17,6 +17,7 @@ import argparse
 import csv
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -25,12 +26,14 @@ import urllib.error
 import urllib.request
 import uuid
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REGIONS = REPO_ROOT / "frontend/resources/js/regionsConfig.js"
-KESTREL_TSV = "kestrel/kestrel_result.tsv"
+# VNtyper writes <out>/kestrel/kestrel_result.tsv; the API zips <out> with paths relative
+# to it (vntyper/scripts/archive_safety.py _write_zip), so the member is kestrel/kestrel_result.tsv.
+KESTREL_TSV = "kestrel_result.tsv"
 ARTIFACT_FLAG = "False_Positive_4bp_Insertion"
 # Seconds between calls per endpoint: the API's limits (10/60 s high, 100/60 s simple) plus 20%.
 MIN_INTERVAL = {"high": 60 / 10 * 1.2, "simple": 60 / 100 * 1.2}
@@ -58,8 +61,10 @@ def slice_cmds(bam: Path, region: str, out: Path) -> list[list[str]]:
 
 def local_cmd(image: str, bam: Path, out_dir: Path, threads: int, assembly: str, fast: bool):
     # Mirrors build_vntyper_command() in the API worker (docker/app/tasks.py), adVNTR off.
+    # Run as the caller so outputs are not owned by the image user; HOME=/tmp because
+    # the caller's uid has no home directory in the image.
     cmd = [
-        "docker", "run", "--rm",
+        "docker", "run", "--rm", "--user", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp",
         "-v", f"{bam.parent}:/in:ro", "-v", f"{out_dir}:/out",
         image, "vntyper", "pipeline", "--bam", f"/in/{bam.name}", "-o", "/out",
         "--threads", str(threads), "--reference-assembly", assembly,
@@ -115,12 +120,21 @@ def compare(local_rows: list[dict[str, str]], online_rows: list[dict[str, str]])
     }
 
 
+def pick_kestrel(paths: list[str]) -> str:
+    """The kestrel_result.tsv to use: prefer one inside a kestrel/ dir, then the shallowest."""
+    hits = [p for p in paths if p.split("/")[-1] == KESTREL_TSV]
+    if not hits:
+        raise ValueError(f"{KESTREL_TSV} not found")
+    return min(hits, key=lambda p: (not p.endswith("kestrel/" + KESTREL_TSV), p.count("/"), p))
+
+
 def kestrel_from_zip(data: bytes) -> str:
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
-        names = [n for n in zf.namelist() if n.endswith(KESTREL_TSV)]
-        if not names:
-            raise ValueError(f"{KESTREL_TSV} not in result archive")
-        return zf.read(names[0]).decode()
+        return zf.read(pick_kestrel(zf.namelist())).decode()
+
+
+def kestrel_from_dir(root: Path) -> str:
+    return Path(pick_kestrel([str(p) for p in root.rglob(KESTREL_TSV)])).read_text()
 
 
 # --------------------------------------------------------------------------- timing
@@ -132,7 +146,8 @@ def to_epoch(value) -> float | None:
         return None
     if isinstance(value, (int, float)):
         return float(value)
-    return datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+    dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).timestamp()  # naive = UTC, like the API
 
 
 def online_timings(t: dict, server: dict) -> dict:
@@ -258,6 +273,49 @@ def run(cmd: list[str], dry: bool) -> str:
     return "" if dry else subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
 
 
+ROW_COLS = [
+    "sample", "job_id", "online_status", "timing_source", "upload_s", "queue_s", "compute_s",
+    "download_s", "end_to_end_s", "local_wall_s", "status_local", "status_online", "concordant",
+    "mismatches", "error",
+]  # fmt: skip
+
+
+def error_text(e: Exception) -> str:
+    detail = (getattr(e, "stderr", None) or "").strip().splitlines()
+    return f"{type(e).__name__}: {e}" + (f" | {detail[-1]}" if detail else "")
+
+
+def benchmark_sample(api: Api, bam: Path, args, versions_match: bool) -> dict:
+    """Online then local run of one slice. Any failure is recorded in ``error``, never raised,
+    so online timings already measured survive a failed local run and the next sample runs."""
+    row: dict = {"sample": bam.stem}
+    errors = []
+    o: dict = {}
+    try:
+        # One job at a time so queue wait reflects other users, not our own submissions.
+        o = (submit_and_track(api, [bam], args) or [{}])[0]
+        timing = ("job_id", "timing_source", "upload_s", "queue_s", "compute_s", "download_s", "end_to_end_s")
+        row.update({k: o.get(k) for k in timing})
+        row["online_status"] = o.get("server", {}).get("status")
+    except Exception as e:
+        errors.append(f"online: {error_text(e)}")
+    res_dir = (args.out / "local" / bam.stem).resolve()
+    t0 = time.time()
+    try:
+        res_dir.mkdir(parents=True, exist_ok=True)
+        run(local_cmd(args.image, bam.resolve(), res_dir, args.threads, args.assembly, args.mode == "fast"), api.dry)
+        row["local_wall_s"] = time.time() - t0
+        if versions_match and "zip" in o:
+            local_rows = parse_kestrel(kestrel_from_dir(res_dir))
+            row.update(compare(local_rows, parse_kestrel(kestrel_from_zip(o["zip"]))))
+    except Exception as e:
+        errors.append(f"local: {error_text(e)}")
+    if errors:
+        row["error"] = "; ".join(errors)
+        print(f"! {bam.stem}: {row['error']}", file=sys.stderr)
+    return row
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("bams", nargs="+", type=Path)
@@ -294,35 +352,23 @@ def main(argv=None) -> int:
         sliced.append(out)
 
     rows = []
-    for bam in sliced:
-        # One job at a time so queue wait reflects other users, not our own submissions.
-        o = (submit_and_track(api, [bam], args) or [{}])[0]
-        res_dir = (args.out / "local" / bam.stem).resolve()
-        res_dir.mkdir(parents=True, exist_ok=True)
-        t0 = time.time()
-        run(local_cmd(args.image, bam.resolve(), res_dir, args.threads, args.assembly, args.mode == "fast"), dry)
-        row = {"sample": bam.stem, "local_wall_s": time.time() - t0}
-        if dry:
+    with open(args.out / "per_sample.tsv", "w", newline="") as fh:
+        w = csv.DictWriter(fh, ROW_COLS, delimiter="\t", extrasaction="ignore")
+        w.writeheader()
+        for bam in sliced:
+            row = benchmark_sample(api, bam, args, versions_match)
             rows.append(row)
-            continue
-        row.update({k: o.get(k) for k in ("job_id", "timing_source", "upload_s", "queue_s",
-                                          "compute_s", "download_s", "end_to_end_s")})  # fmt: skip
-        row["online_status"] = o["server"]["status"]
-        if versions_match and "zip" in o:
-            local_rows = parse_kestrel((res_dir / KESTREL_TSV).read_text())
-            row.update(compare(local_rows, parse_kestrel(kestrel_from_zip(o["zip"]))))
-        rows.append(row)
+            w.writerow(row)
+            fh.flush()  # a crash later in the run keeps every finished sample
 
     batches = []
     for n in [int(x) for x in args.batch_sizes.split(",") if x]:
-        jobs = submit_and_track(api, [sliced[i % len(sliced)] for i in range(n)], args)
-        batches.append(batch_summary(jobs) if jobs else {"n": n, "dry_run": True})
+        try:
+            jobs = submit_and_track(api, [sliced[i % len(sliced)] for i in range(n)], args)
+            batches.append(batch_summary(jobs) if jobs else {"n": n, "dry_run": True})
+        except Exception as e:  # keep the per-sample results and the other batches
+            batches.append({"n": n, "error": error_text(e)})
 
-    cols = sorted({k for r in rows for k in r}, key=lambda k: (k != "sample", k))
-    with open(args.out / "per_sample.tsv", "w", newline="") as fh:
-        w = csv.DictWriter(fh, cols, delimiter="\t")
-        w.writeheader()
-        w.writerows(rows)
     compared = [r for r in rows if "concordant" in r]
     summary = {
         "base_url": args.base_url, "assembly": args.assembly, "region": region,
