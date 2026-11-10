@@ -218,6 +218,7 @@ class Api:
         fields = {
             "thread": str(threads), "reference_assembly": assembly,
             "fast_mode": str(fast).lower(), "advntr_mode": "false",
+            "archive_results": "true",  # without it the server writes no zip and /download/ 404s
         }  # fmt: skip
         files = {"bam_file": bam, "bai_file": Path(f"{bam}.bai")}
         boundary = uuid.uuid4().hex
