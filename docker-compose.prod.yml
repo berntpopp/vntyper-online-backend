@@ -75,27 +75,27 @@ services:
   # Backend Services - Production Environment File Overrides
   # ===========================================================================
   backend_api:
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_worker_vntyper:
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_worker_vntyper_long:
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_worker:
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
     env_file:
       - ${ENV_FILE:-.env.production}
 
   backend_beat:
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
     env_file:
       - ${ENV_FILE:-.env.production}
 
