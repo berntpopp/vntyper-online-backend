@@ -71,7 +71,7 @@ services:
   # PostgreSQL - Relational database for anonymous research data donations
   # ===========================================================================
   postgres:
-    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
     container_name: vntyper_online_postgres
     user: "postgres"
     security_opt:
@@ -107,7 +107,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.49@sha256:9144f02d1302f8132b13a7a42b026307759594bd08020c1ab850cc7dc9aa3e76}
     container_name: vntyper_backend_api
     # Security hardening
     security_opt:
@@ -162,7 +162,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.49@sha256:9144f02d1302f8132b13a7a42b026307759594bd08020c1ab850cc7dc9aa3e76}
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
     # Security hardening
@@ -205,7 +205,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.49@sha256:9144f02d1302f8132b13a7a42b026307759594bd08020c1ab850cc7dc9aa3e76}
     container_name: vntyper_online_worker_vntyper_long
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_long_queue"]
     # Security hardening
@@ -248,7 +248,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.49@sha256:9144f02d1302f8132b13a7a42b026307759594bd08020c1ab850cc7dc9aa3e76}
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "-Q", "celery"]
     # Security hardening
@@ -291,7 +291,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.47@sha256:eea3dd942be9f20db351158f459234d4ea6fe5e82b79102a2ec763825cf012b1}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.49@sha256:9144f02d1302f8132b13a7a42b026307759594bd08020c1ab850cc7dc9aa3e76}
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info", "-s", "/tmp/celerybeat-schedule"]
     # Security hardening
