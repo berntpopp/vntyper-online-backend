@@ -131,6 +131,8 @@ services:
       # can still set either to false, and users can untick them per job.
       DEFAULT_ADVNTR_MODE: ${DEFAULT_ADVNTR_MODE:-true}
       DEFAULT_NORMAL_MODE: ${DEFAULT_NORMAL_MODE:-true}
+      # The donation store; the app reads only this URL (password must be URL-safe).
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-vntyper_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-vntyper_donations}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - handoff_spool:/opt/vntyper/handoff
