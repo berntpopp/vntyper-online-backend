@@ -240,6 +240,14 @@ server {
 
     client_max_body_size ${CLIENT_MAX_BODY_SIZE};
 
-    # Redirect to main domain
-    return 301 https://${SERVER_NAME}$request_uri;
+    # Redirect to main domain. In locations, not at server level: a server-level return
+    # runs before location matching, so the donation path could not switch its log off.
+    location /api/donations/ {
+        access_log off;
+        return 301 https://${SERVER_NAME}$request_uri;
+    }
+
+    location / {
+        return 301 https://${SERVER_NAME}$request_uri;
+    }
 }
