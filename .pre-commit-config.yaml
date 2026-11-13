@@ -79,7 +79,8 @@ repos:
     hooks:
       - id: hadolint-docker
         name: Lint Dockerfiles
-        entry: hadolint
+        # docker_image hooks take `<image> <command>`; a bare `hadolint` names no image.
+        entry: ghcr.io/hadolint/hadolint:v2.15.1 hadolint
         language: docker_image
         types: [dockerfile]
         args: ['--config', '.hadolint.yaml']

@@ -14,11 +14,13 @@ on:
     paths:
       - 'proxy/**'
       - 'certbot/**'
+      - '.github/workflows/container-scan.yml'
   pull_request:
     branches: [main]
     paths:
       - 'proxy/**'
       - 'certbot/**'
+      - '.github/workflows/container-scan.yml'
   schedule:
     # Weekly scan to catch new CVEs in base images
     - cron: '0 1 * * 0'
@@ -28,7 +30,7 @@ on:
 # Cancel in-progress runs for the same branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -41,6 +43,7 @@ jobs:
   build-and-scan:
     name: Build & Scan ${{ matrix.image }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -67,9 +70,9 @@ jobs:
           push: false
           load: true
           tags: ${{ matrix.image }}:scan
-          # Use GitHub Actions cache for faster builds
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # One cache scope per image: a shared scope lets each leg evict the other's layers
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e # 0.34.2

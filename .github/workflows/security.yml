@@ -24,25 +24,30 @@ on:
 # Cancel in-progress runs for the same branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  # ===========================================================================
-  # Trivy Configuration Scan
-  # Scans Dockerfiles, docker-compose, and IaC files for misconfigurations
-  # ===========================================================================
-  trivy-config:
-    name: Trivy Config Scan
+  # One job, one runner: the scans take seconds each, while every extra job
+  # waits minutes for a runner slot on the free plan. `!cancelled()` keeps each
+  # scan running and uploading even when an earlier one fails.
+  scan:
+    name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history needed for Gitleaks to scan all commits
+          fetch-depth: 0
 
+      # Trivy config: Dockerfiles, docker-compose and IaC misconfigurations
       - name: Run Trivy vulnerability scanner (config mode)
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e # 0.34.2
         with:
           scan-type: 'config'
@@ -56,6 +61,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy results to GitHub Security tab
+        if: ${{ !cancelled() }}
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v3
         with:
           sarif_file: 'trivy-config-results.sarif'
@@ -63,23 +69,10 @@ jobs:
         # Don't fail if upload fails (e.g., on forks)
         continue-on-error: true
 
-  # ===========================================================================
-  # Gitleaks Secret Detection
-  # Scans repository for accidentally committed secrets
-  # ===========================================================================
-  gitleaks:
-    name: Secret Detection
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # Full history needed for scanning all commits
-          fetch-depth: 0
-
       # gitleaks-action needs a paid license for organisation repos; the
       # MIT-licensed CLI does the same scan. Pinned by version and checksum.
       - name: Run Gitleaks
+        if: ${{ !cancelled() }}
         env:
           GITLEAKS_VERSION: 8.30.1
           GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
@@ -91,18 +84,9 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
           "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .
 
-  # ===========================================================================
-  # Trivy Filesystem Scan
-  # Scans for vulnerabilities in lockfiles and dependencies
-  # ===========================================================================
-  trivy-fs:
-    name: Trivy Filesystem Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
+      # Trivy filesystem: vulnerabilities in lockfiles and dependencies
       - name: Run Trivy vulnerability scanner (fs mode)
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e # 0.34.2
         with:
           scan-type: 'fs'
@@ -115,6 +99,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy FS results to GitHub Security tab
+        if: ${{ !cancelled() }}
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v3
         with:
           sarif_file: 'trivy-fs-results.sarif'

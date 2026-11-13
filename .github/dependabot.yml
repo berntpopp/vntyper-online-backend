@@ -91,7 +91,7 @@ updates:
       - "docker-compose"
       - "automated"
     open-pull-requests-limit: 3
-    # Group Redis updates
+    # Group all service image updates into one PR
     groups:
       docker-compose-images:
         patterns:
@@ -100,6 +100,10 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Built locally from this repo, not pulled: a registry lookup fails the run
+      - dependency-name: "vntyper_certbot"
+      - dependency-name: "vntyper_frontend"
+      - dependency-name: "vntyper_proxy"
 
   # ==========================================================================
   # Git Submodules - Backend and Frontend repos
