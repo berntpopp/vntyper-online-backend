@@ -13,22 +13,27 @@
 .PHONY: help lint lint-docker lint-shell lint-yaml lint-actions lint-compose \
         security security-secrets security-trivy \
         pre-commit pre-commit-install pre-commit-update \
-        dev-up dev-down dev-logs dev-build dev-restart \
-        prod-up prod-down prod-logs prod-build \
+        dev-up dev-down dev-logs dev-build dev-restart dev-shell dev-redis \
+        prod-up prod-down prod-logs prod-build prod-status \
         clean validate format
 
 # Default target
 .DEFAULT_GOAL := help
 
 # Colors for output
-BLUE := \033[0;34m
-GREEN := \033[0;32m
-YELLOW := \033[0;33m
-RED := \033[0;31m
-NC := \033[0m # No Color
+BLUE := $(shell printf '\033[0;34m')
+GREEN := $(shell printf '\033[0;32m')
+YELLOW := $(shell printf '\033[0;33m')
+RED := $(shell printf '\033[0;31m')
+NC := $(shell printf '\033[0m')
 
 # Environment file (default to local)
 ENV_FILE ?= .env.local
+
+# Recipes use bash features (`source`); /bin/sh is dash on Debian/Ubuntu.
+SHELL := /bin/bash
+
+DEV_COMPOSE = docker compose --env-file $(ENV_FILE) -f docker-compose.yml -f docker-compose.dev.yml
 
 # ============================================================================
 # Help
@@ -145,22 +150,22 @@ pre-commit-update: ## Update pre-commit hooks to latest versions
 
 dev-up: ## Start development environment
 	@echo "$(BLUE)Starting development environment...$(NC)"
-	@./dev.sh up
+	@$(DEV_COMPOSE) up -d
 
 dev-down: ## Stop development environment
 	@echo "$(BLUE)Stopping development environment...$(NC)"
-	@./dev.sh down
+	@$(DEV_COMPOSE) down
 
 dev-logs: ## View development logs (follow mode)
-	@./dev.sh logs
+	@$(DEV_COMPOSE) logs -f
 
 dev-build: ## Rebuild development containers
 	@echo "$(BLUE)Rebuilding development containers...$(NC)"
-	@./dev.sh build
+	@$(DEV_COMPOSE) build
 
 dev-restart: ## Restart development services
 	@echo "$(BLUE)Restarting development services...$(NC)"
-	@./dev.sh down && ./dev.sh up
+	@$(DEV_COMPOSE) down && $(DEV_COMPOSE) up -d
 
 dev-shell: ## Open shell in backend API container
 	@docker exec -it vntyper_backend_api bash
