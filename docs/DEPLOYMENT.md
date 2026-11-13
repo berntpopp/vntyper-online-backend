@@ -96,7 +96,7 @@ connection is secure.
 ## Backend Image Pinning
 
 `docker-compose.yml` defaults `VNTYPER_IMAGE` to a digest-pinned release
-(`ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd...`). A digest reference
+(`ghcr.io/vntyper-org/vntyper:2.0.51@sha256:7f8b75af99f5e99283bfcf9828ba5874dc1e0d23dff7656346910f8c8bdf14ff...`). A digest reference
 cannot be used as a build tag, so `deploy.sh`'s build step no longer replaces
 the running image: `up` pulls exactly the pinned digest. To roll forward, set
 `VNTYPER_IMAGE` in `.env.production` (or bump the default) to a new
