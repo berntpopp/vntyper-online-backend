@@ -48,7 +48,7 @@ jobs:
       # Trivy config: Dockerfiles, docker-compose and IaC misconfigurations
       - name: Run Trivy vulnerability scanner (config mode)
         if: ${{ !cancelled() }}
-        uses: aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e # 0.34.2
+        uses: aquasecurity/trivy-action@38b337fff0a2f984d5be173c99e3f633438167ec # 0.34.2
         with:
           scan-type: 'config'
           scan-ref: '.'
@@ -87,7 +87,7 @@ jobs:
       # Trivy filesystem: vulnerabilities in lockfiles and dependencies
       - name: Run Trivy vulnerability scanner (fs mode)
         if: ${{ !cancelled() }}
-        uses: aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e # 0.34.2
+        uses: aquasecurity/trivy-action@38b337fff0a2f984d5be173c99e3f633438167ec # 0.34.2
         with:
           scan-type: 'fs'
           scan-ref: '.'
