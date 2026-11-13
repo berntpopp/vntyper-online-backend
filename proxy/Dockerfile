@@ -18,8 +18,8 @@ LABEL org.opencontainers.image.title="VNtyper Proxy" \
       org.opencontainers.image.description="Hardened Nginx reverse proxy for VNtyper Online (non-root)" \
       org.opencontainers.image.vendor="VNtyper Project" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/berntpopp/vntyper-online-backend" \
-      org.opencontainers.image.documentation="https://github.com/berntpopp/vntyper-online-backend"
+      org.opencontainers.image.source="https://github.com/vntyper-org/vntyper-online-backend" \
+      org.opencontainers.image.documentation="https://github.com/vntyper-org/vntyper-online-backend"
 
 # Switch to root temporarily to install packages and set permissions
 USER root

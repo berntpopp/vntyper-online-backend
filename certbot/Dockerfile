@@ -18,8 +18,8 @@ LABEL org.opencontainers.image.title="VNtyper Certbot" \
       org.opencontainers.image.description="Automated SSL certificate management for VNtyper Online (non-root)" \
       org.opencontainers.image.vendor="VNtyper Project" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/berntpopp/vntyper-online-backend" \
-      org.opencontainers.image.documentation="https://github.com/berntpopp/vntyper-online-backend"
+      org.opencontainers.image.source="https://github.com/vntyper-org/vntyper-online-backend" \
+      org.opencontainers.image.documentation="https://github.com/vntyper-org/vntyper-online-backend"
 
 # Upgrade base packages and pip for security fixes
 # - CVE-2024-58251, CVE-2025-46394: busybox vulnerabilities
