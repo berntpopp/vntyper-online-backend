@@ -1,6 +1,6 @@
 # R1.7 benchmark: VNtyper-Online versus local execution
 
-`r17_online_vs_local.py` answers reviewer request R1.7 (berntpopp/vntyper-manuscript#75):
+`r17_online_vs_local.py` answers reviewer request R1.7:
 runtime, concordance and batch scalability of VNtyper-Online against a local Docker run.
 
 Per BAM it:
