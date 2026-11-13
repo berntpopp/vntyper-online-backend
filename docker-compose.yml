@@ -6,7 +6,7 @@
 # - security_opt: no-new-privileges (prevent privilege escalation)
 # - cap_drop: ALL (drop all capabilities, add back only required)
 # - read_only where possible (immutable filesystem)
-# - tmpfs for required writable directories
+# - tmpfs for required writable directories (Redis /data is a named volume)
 # - resource limits (prevent DoS)
 # - health checks for all services
 # - pinned image versions
@@ -27,9 +27,10 @@ services:
     cap_drop:
       - ALL
     read_only: true
-    tmpfs:
-      # Owned by uid 999 (redis user)
-      - /data:size=256M,mode=770,uid=999,gid=999
+    volumes:
+      # Named volume so the AOF (incl. the cumulative usage counter) survives
+      # redeploys; Docker seeds it from the image's /data (owned by uid 999).
+      - redis_data:/data
     # Resource limits
     deploy:
       resources:
@@ -51,7 +52,9 @@ services:
       - --maxmemory
       - 256mb
       - --maxmemory-policy
-      - allkeys-lru
+      # Evict only keys with a TTL; persistent keys (usage counters, queues) are
+      # never evicted, Redis returns OOM errors on writes instead.
+      - volatile-lru
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
     networks:
@@ -104,7 +107,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
     container_name: vntyper_backend_api
     # Security hardening
     security_opt:
@@ -128,6 +131,8 @@ services:
       # can still set either to false, and users can untick them per job.
       DEFAULT_ADVNTR_MODE: ${DEFAULT_ADVNTR_MODE:-true}
       DEFAULT_NORMAL_MODE: ${DEFAULT_NORMAL_MODE:-true}
+      # The donation store; the app reads only this URL (password must be URL-safe).
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-vntyper_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-vntyper_donations}
     volumes:
       - ${INPUT_VOLUME}:/opt/vntyper/input
       - handoff_spool:/opt/vntyper/handoff
@@ -157,7 +162,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
     # Security hardening
@@ -200,7 +205,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
     container_name: vntyper_online_worker_vntyper_long
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_long_queue"]
     # Security hardening
@@ -243,7 +248,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "-Q", "celery"]
     # Security hardening
@@ -286,7 +291,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:main}
+    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info", "-s", "/tmp/celerybeat-schedule"]
     # Security hardening

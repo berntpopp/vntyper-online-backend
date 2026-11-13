@@ -8,6 +8,12 @@ server {
         root /var/www/certbot;
     }
 
+    # Anonymous research donations: redirect without an access-log line.
+    location /api/donations/ {
+        access_log off;
+        return 301 https://$host$request_uri;
+    }
+
     location / {
         return 301 https://$host$request_uri;
     }
@@ -146,6 +152,17 @@ server {
         add_header Expires "0" always;
     }
 
+    # Anonymous research donations: no access log, so no address, agent or time is kept
+    # next to a donation. The API filters its own access log for this path too.
+    location /api/donations/ {
+        access_log off;
+        proxy_pass http://backend_api:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     # Proxy API Requests to Backend API
     location /api/ {
         proxy_pass http://backend_api:8000;
@@ -223,6 +240,14 @@ server {
 
     client_max_body_size ${CLIENT_MAX_BODY_SIZE};
 
-    # Redirect to main domain
-    return 301 https://${SERVER_NAME}$request_uri;
+    # Redirect to main domain. In locations, not at server level: a server-level return
+    # runs before location matching, so the donation path could not switch its log off.
+    location /api/donations/ {
+        access_log off;
+        return 301 https://${SERVER_NAME}$request_uri;
+    }
+
+    location / {
+        return 301 https://${SERVER_NAME}$request_uri;
+    }
 }

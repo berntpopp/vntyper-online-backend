@@ -18,8 +18,8 @@ VNtyper Online is a comprehensive web application designed for MUC1-VNTR typing.
 
 ## Features
 
-- **Backend API**: Powered by [VNtyper](https://github.com/hassansaei/VNtyper.git), the backend handles all data processing and business logic.
-- **Frontend Interface**: Developed using [vntyper-online-frontend](https://github.com/berntpopp/vntyper-online-frontend.git), the frontend provides an intuitive user interface.
+- **Backend API**: Powered by [VNtyper](https://github.com/vntyper-org/VNtyper.git), the backend handles all data processing and business logic.
+- **Frontend Interface**: Developed using [vntyper-online-frontend](https://github.com/vntyper-org/vntyper-online-frontend.git), the frontend provides an intuitive user interface.
 - **Reverse Proxy with Nginx**: Manages incoming requests, handles SSL termination, and serves as a gateway to the backend and frontend services.
 - **SSL Support with Let's Encrypt**: Ensures secure communication between users and the server using automated SSL certificate management.
 - **Containerization with Docker**: Simplifies deployment and ensures consistency across different environments.
@@ -29,8 +29,8 @@ VNtyper Online is a comprehensive web application designed for MUC1-VNTR typing.
 
 ```
 project-root/
-├── backend/                # Submodule: Backend API (https://github.com/hassansaei/VNtyper.git)
-├── frontend/               # Submodule: Frontend Interface (https://github.com/berntpopp/vntyper-online-frontend.git)
+├── backend/                # Submodule: Backend API (https://github.com/vntyper-org/VNtyper.git)
+├── frontend/               # Submodule: Frontend Interface (https://github.com/vntyper-org/vntyper-online-frontend.git)
 ├── proxy/                  # Reverse Proxy Configuration
 │   ├── Dockerfile
 │   ├── entrypoint.sh
@@ -66,7 +66,7 @@ Before setting up VNtyper Online, ensure that your system meets the following re
 VNtyper Online uses Git submodules to include the backend and frontend components. To clone the repository along with its submodules, use the following command:
 
 ```bash
-git clone --recurse-submodules https://github.com/berntpopp/vntyper-online-backend.git
+git clone --recurse-submodules https://github.com/vntyper-org/vntyper-online-backend.git
 ```
 
 If you've already cloned the repository without the `--recurse-submodules` flag, initialize and update the submodules with:

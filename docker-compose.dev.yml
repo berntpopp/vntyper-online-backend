@@ -23,6 +23,8 @@ services:
   # Backend API - Development Mode with Auto-Reload
   # ===========================================================================
   backend_api:
+    # Base pins a GHCR digest (cannot be a build tag); dev runs the local build.
+    image: ${VNTYPER_IMAGE:-vntyper-online:dev}
     # Override entrypoint and command to use fastapi dev with auto-reload
     # Note: fastapi dev has --reload enabled by default
     entrypoint: ["/bin/bash", "-c"]
@@ -50,6 +52,7 @@ services:
   #     backend_worker backend_worker_vntyper backend_worker_vntyper_long
 
   backend_worker_vntyper:
+    image: ${VNTYPER_IMAGE:-vntyper-online:dev}
     volumes:
       - ./backend/docker/app:/opt/vntyper/app:rw
       - ${INPUT_VOLUME}:/opt/vntyper/input
@@ -59,6 +62,7 @@ services:
     restart: "no"
 
   backend_worker_vntyper_long:
+    image: ${VNTYPER_IMAGE:-vntyper-online:dev}
     volumes:
       - ./backend/docker/app:/opt/vntyper/app:rw
       - ${INPUT_VOLUME}:/opt/vntyper/input
@@ -68,6 +72,7 @@ services:
     restart: "no"
 
   backend_worker:
+    image: ${VNTYPER_IMAGE:-vntyper-online:dev}
     volumes:
       - ./backend/docker/app:/opt/vntyper/app:rw
       - ${INPUT_VOLUME}:/opt/vntyper/input
@@ -77,6 +82,7 @@ services:
     restart: "no"
 
   backend_beat:
+    image: ${VNTYPER_IMAGE:-vntyper-online:dev}
     volumes:
       - ./backend/docker/app:/opt/vntyper/app:rw
       - ${INPUT_VOLUME}:/opt/vntyper/input

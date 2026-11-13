@@ -1,6 +1,6 @@
 [submodule "backend"]
 	path = backend
-	url = https://github.com/hassansaei/VNtyper.git
+	url = https://github.com/vntyper-org/VNtyper.git
 [submodule "frontend"]
 	path = frontend
-	url = https://github.com/berntpopp/vntyper-online-frontend.git
+	url = https://github.com/vntyper-org/vntyper-online-frontend.git

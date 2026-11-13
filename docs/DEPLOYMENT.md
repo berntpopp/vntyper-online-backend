@@ -62,6 +62,27 @@ sudo docker-compose --env-file .env.production \
 curl -s https://yourdomain.org/api/health/
 ```
 
+## Backend Image Pinning
+
+`docker-compose.yml` defaults `VNTYPER_IMAGE` to a digest-pinned release
+(`ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd...`). A digest reference
+cannot be used as a build tag, so `deploy.sh`'s build step no longer replaces
+the running image: `up` pulls exactly the pinned digest. To roll forward, set
+`VNTYPER_IMAGE` in `.env.production` (or bump the default) to a new
+`tag@sha256:digest` (`docker buildx imagetools inspect <tag>` prints the digest).
+`docker-compose.dev.yml` uses a local `vntyper-online:dev` tag so dev still runs
+the local build.
+
+## Redis Persistence
+
+Redis stores its append-only file in the named volume `redis_data` (previously
+a tmpfs), so the cumulative usage counter survives `docker-compose down` and
+redeploys. The eviction policy is `volatile-lru`: only keys with a TTL (job IDs,
+Celery results, per-job usage and cohort records) can be evicted; keys without a TTL (cumulative usage
+counters, Celery queues) are never dropped, and at the 256 MB limit Redis rejects writes
+with OOM instead. Do not run `docker-compose down -v` (or `docker volume rm`) in
+production; that deletes the counter.
+
 ## SSL Certificates
 
 - **Auto-renewal**: Certbot checks every 12h, renews at <30 days
