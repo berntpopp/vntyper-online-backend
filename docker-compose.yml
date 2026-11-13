@@ -107,7 +107,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
+    image: ${VNTYPER_IMAGE:-ghcr.io/vntyper-org/vntyper:2.0.51@sha256:7f8b75af99f5e99283bfcf9828ba5874dc1e0d23dff7656346910f8c8bdf14ff}
     container_name: vntyper_backend_api
     # Security hardening
     security_opt:
@@ -162,7 +162,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
+    image: ${VNTYPER_IMAGE:-ghcr.io/vntyper-org/vntyper:2.0.51@sha256:7f8b75af99f5e99283bfcf9828ba5874dc1e0d23dff7656346910f8c8bdf14ff}
     container_name: vntyper_online_worker_vntyper
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_queue"]
     # Security hardening
@@ -205,7 +205,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
+    image: ${VNTYPER_IMAGE:-ghcr.io/vntyper-org/vntyper:2.0.51@sha256:7f8b75af99f5e99283bfcf9828ba5874dc1e0d23dff7656346910f8c8bdf14ff}
     container_name: vntyper_online_worker_vntyper_long
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=1", "-Q", "vntyper_long_queue"]
     # Security hardening
@@ -248,7 +248,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
+    image: ${VNTYPER_IMAGE:-ghcr.io/vntyper-org/vntyper:2.0.51@sha256:7f8b75af99f5e99283bfcf9828ba5874dc1e0d23dff7656346910f8c8bdf14ff}
     container_name: vntyper_online_worker
     command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "-Q", "celery"]
     # Security hardening
@@ -291,7 +291,7 @@ services:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    image: ${VNTYPER_IMAGE:-ghcr.io/hassansaei/vntyper:2.0.50@sha256:d9cd90cd1b717d6c5fcebf3ce09d37ec4e86b4a6dc23074bb0b2bdce5af0e21c}
+    image: ${VNTYPER_IMAGE:-ghcr.io/vntyper-org/vntyper:2.0.51@sha256:7f8b75af99f5e99283bfcf9828ba5874dc1e0d23dff7656346910f8c8bdf14ff}
     container_name: vntyper_online_beat
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info", "-s", "/tmp/celerybeat-schedule"]
     # Security hardening
