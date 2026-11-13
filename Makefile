@@ -33,6 +33,10 @@ ENV_FILE ?= .env.local
 # Recipes use bash features (`source`); /bin/sh is dash on Debian/Ubuntu.
 SHELL := /bin/bash
 
+# Use the installed linter, else its official image (same versions as CI).
+HADOLINT ?= $(if $(shell command -v hadolint),hadolint,docker run --rm -v "$(CURDIR)":/w -w /w ghcr.io/hadolint/hadolint:v2.15.1 hadolint)
+SHELLCHECK ?= $(if $(shell command -v shellcheck),shellcheck,docker run --rm -v "$(CURDIR)":/mnt -w /mnt docker.io/koalaman/shellcheck:v0.10.0)
+
 DEV_COMPOSE = docker compose --env-file $(ENV_FILE) -f docker-compose.yml -f docker-compose.dev.yml
 
 # ============================================================================
@@ -71,8 +75,7 @@ lint: lint-docker lint-shell lint-yaml lint-actions lint-compose ## Run all lint
 
 lint-docker: ## Lint Dockerfiles with hadolint
 	@echo "$(BLUE)Linting Dockerfiles...$(NC)"
-	@hadolint --config .hadolint.yaml proxy/Dockerfile || true
-	@hadolint --config .hadolint.yaml certbot/Dockerfile || true
+	@$(HADOLINT) --config .hadolint.yaml proxy/Dockerfile certbot/Dockerfile
 
 lint-shell: ## Lint shell scripts with shellcheck
 	@echo "$(BLUE)Linting shell scripts...$(NC)"
@@ -80,7 +83,7 @@ lint-shell: ## Lint shell scripts with shellcheck
 		-not -path './backend/*' \
 		-not -path './frontend/*' \
 		-not -path './node_modules/*' \
-		-exec shellcheck --rcfile=.shellcheckrc {} +
+		-exec $(SHELLCHECK) --severity=warning --rcfile=.shellcheckrc {} +
 
 lint-yaml: ## Lint YAML files with yamllint
 	@echo "$(BLUE)Linting YAML files...$(NC)"
@@ -123,8 +126,7 @@ security-audit: ## Run comprehensive security audit
 	@detect-secrets scan --baseline .secrets.baseline
 	@echo ""
 	@echo "Checking Dockerfiles..."
-	@hadolint --config .hadolint.yaml proxy/Dockerfile
-	@hadolint --config .hadolint.yaml certbot/Dockerfile
+	@$(HADOLINT) --config .hadolint.yaml proxy/Dockerfile certbot/Dockerfile
 
 # ============================================================================
 # Pre-commit Targets

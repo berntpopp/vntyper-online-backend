@@ -61,5 +61,6 @@ docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev
 | `make lint-compose` | `docker compose config` for the base and dev files (reads `ENV_FILE`, default `.env.local`) |
 | `make security` | detect-secrets against `.secrets.baseline` |
 
-`make lint` runs all five linters. `make pre-commit-install` installs the hooks from
+`make lint` runs all five linters. Without a local `hadolint` or `shellcheck`, the
+Makefile runs the official Docker image at the version CI uses. `make pre-commit-install` installs the hooks from
 `.pre-commit-config.yaml`.
